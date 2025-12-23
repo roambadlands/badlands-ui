@@ -130,7 +130,10 @@ export default function ChatSessionPage() {
             onDone: () => {
               resetStreaming();
               queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
-              queryClient.invalidateQueries({ queryKey: ["sessions"] });
+              // Delay sessions invalidation to allow backend title generation to complete
+              setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ["sessions"] });
+              }, 1500);
             },
             onError: (code, message) => {
               console.error(`Stream error [${code}]:`, message);

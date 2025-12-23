@@ -105,7 +105,10 @@ export default function ChatPage() {
                 onDone: () => {
                   resetStreaming();
                   queryClient.invalidateQueries({ queryKey: ["session", newSession.id] });
-                  queryClient.invalidateQueries({ queryKey: ["sessions"] });
+                  // Delay sessions invalidation to allow backend title generation to complete
+                  setTimeout(() => {
+                    queryClient.invalidateQueries({ queryKey: ["sessions"] });
+                  }, 1500);
                 },
                 onError: (code, message) => {
                   console.error(`Stream error [${code}]:`, message);
@@ -160,7 +163,10 @@ export default function ChatPage() {
             onDone: () => {
               resetStreaming();
               queryClient.invalidateQueries({ queryKey: ["session", activeSessionId] });
-              queryClient.invalidateQueries({ queryKey: ["sessions"] });
+              // Delay sessions invalidation to allow backend title generation to complete
+              setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ["sessions"] });
+              }, 1500);
             },
             onError: (code, message) => {
               console.error(`Stream error [${code}]:`, message);
