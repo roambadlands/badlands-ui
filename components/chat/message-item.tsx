@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize from "rehype-sanitize";
 import { User, Bot } from "lucide-react";
@@ -82,7 +83,7 @@ export function MessageItem({
 
         <div className="prose prose-sm dark:prose-invert max-w-none">
           <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkBreaks]}
             rehypePlugins={[rehypeHighlight, [rehypeSanitize, sanitizeOptions]]}
             components={{
               code({ className, children, ...props }) {
@@ -123,6 +124,29 @@ export function MessageItem({
                   >
                     {children}
                   </a>
+                );
+              },
+              table({ children }) {
+                return (
+                  <div className="overflow-x-auto my-4">
+                    <table className="min-w-full border-collapse border border-border">
+                      {children}
+                    </table>
+                  </div>
+                );
+              },
+              th({ children }) {
+                return (
+                  <th className="border border-border bg-muted px-3 py-2 text-left font-semibold">
+                    {children}
+                  </th>
+                );
+              },
+              td({ children }) {
+                return (
+                  <td className="border border-border px-3 py-2">
+                    {children}
+                  </td>
                 );
               },
             }}
