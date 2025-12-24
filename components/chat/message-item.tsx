@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -8,7 +9,7 @@ import remarkEmoji from "remark-emoji";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
 import rehypeSanitize from "rehype-sanitize";
-import { User, Bot, ChevronRight } from "lucide-react";
+import { User, Bot, ChevronRight, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sanitizeOptions, convertAsciiTablesToMarkdown } from "@/lib/markdown";
 import { CodeBlock } from "./code-block";
@@ -17,6 +18,7 @@ import { ToolCallDisplay } from "./tool-call";
 import { CitationDisplay } from "./citation";
 import { ContentBlockRenderer } from "./content-block-renderer";
 import { parseMarkdownToBlocks } from "@/lib/markdown-parser";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { Message, ToolCall, Citation, ContentBlock as ContentBlockType } from "@/lib/types";
 
 import "highlight.js/styles/github-dark.css";
@@ -419,15 +421,64 @@ export function MessageItem({
           </div>
         )}
 
-        {!isUser && displayResponseTime !== undefined && (
-          <div className="mt-2 text-xs text-muted-foreground">
-            🕐{" "}
-            {displayResponseTime < 1000
-              ? `${displayResponseTime}ms`
-              : `${(displayResponseTime / 1000).toFixed(1)}s`}
-          </div>
-        )}
+        <MessageFooter
+          content={content}
+          isUser={isUser}
+          responseTimeMs={displayResponseTime}
+        />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Footer for messages with copy button and response time (for assistant).
+ */
+function MessageFooter({
+  content,
+  isUser,
+  responseTimeMs,
+}: {
+  content: string;
+  isUser: boolean;
+  responseTimeMs?: number;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+      {!isUser && responseTimeMs !== undefined && (
+        <span>
+          ⏱️{" "}
+          {responseTimeMs < 1000
+            ? `${responseTimeMs}ms`
+            : `${(responseTimeMs / 1000).toFixed(1)}s`}
+        </span>
+      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={handleCopy}
+            className="hover:text-foreground transition-colors cursor-pointer"
+            aria-label="Copy message"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {copied ? "Copied!" : "Copy"}
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }
