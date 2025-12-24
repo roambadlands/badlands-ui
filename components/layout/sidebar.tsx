@@ -184,57 +184,69 @@ export function Sidebar({
                 <div
                   key={session.id}
                   className={cn(
-                    "group flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent cursor-pointer",
+                    "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent cursor-pointer",
                     activeSessionId === session.id &&
                       "bg-sidebar-accent text-sidebar-accent-foreground"
                   )}
                   onClick={() => onSelectSession(session.id)}
                 >
                   <MessageSquare className="h-4 w-4 shrink-0" />
-                  <div className="flex-1 overflow-hidden">
+                  <div className="flex-1 overflow-hidden pr-8">
                     <div className="truncate">
                       {session.title || "New Chat"}
                     </div>
                     <div
-                      className="text-xs text-muted-foreground"
+                      className="text-xs text-muted-foreground truncate"
                       title={formatFullDateTime(session.created_at)}
                     >
                       {formatDate(session.created_at)}
                     </div>
                   </div>
-                  <div className="shrink-0">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRenameClick(session);
-                          }}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick(session.id);
-                          }}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  {/* Button container pinned to right with gradient fade */}
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+                    <div className={cn(
+                      "w-6 h-full bg-gradient-to-r from-transparent to-sidebar",
+                      "group-hover:to-sidebar-accent",
+                      activeSessionId === session.id && "to-sidebar-accent"
+                    )} />
+                    <div className={cn(
+                      "bg-sidebar pr-1",
+                      "group-hover:bg-sidebar-accent",
+                      activeSessionId === session.id && "bg-sidebar-accent"
+                    )}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenameClick(session);
+                            }}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(session.id);
+                            }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
               ))}
