@@ -432,6 +432,33 @@ export function MessageItem({
 }
 
 /**
+ * Format elapsed time in a human-readable way.
+ * Uses the most appropriate unit based on duration.
+ */
+function formatElapsedTime(ms: number): string {
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+
+  const seconds = ms / 1000;
+  if (seconds < 60) {
+    return `${seconds.toFixed(1)}s`;
+  }
+
+  const minutes = seconds / 60;
+  if (minutes < 60) {
+    const mins = Math.floor(minutes);
+    const secs = Math.round(seconds % 60);
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  }
+
+  const hours = minutes / 60;
+  const hrs = Math.floor(hours);
+  const mins = Math.round(minutes % 60);
+  return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+}
+
+/**
  * Footer for messages with copy button and response time (for assistant).
  */
 function MessageFooter({
@@ -454,12 +481,7 @@ function MessageFooter({
   return (
     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
       {!isUser && responseTimeMs !== undefined && (
-        <span>
-          ⏱️{" "}
-          {responseTimeMs < 1000
-            ? `${responseTimeMs}ms`
-            : `${(responseTimeMs / 1000).toFixed(1)}s`}
-        </span>
+        <span>⏱️ {formatElapsedTime(responseTimeMs)}</span>
       )}
       <Tooltip>
         <TooltipTrigger asChild>
