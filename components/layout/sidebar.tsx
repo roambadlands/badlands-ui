@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, MessageSquare, Trash2, MoreHorizontal, Pencil, Loader2, X } from "lucide-react";
+import { Plus, MessageSquare, Trash2, MoreHorizontal, Pencil, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,11 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Session } from "@/lib/types";
 
@@ -208,117 +203,38 @@ export function Sidebar({
                     </div>
                   </div>
                   <div className="shrink-0">
-                    <Popover
-                      open={renameSessionId === session.id}
-                      onOpenChange={(open) => {
-                        if (!open) handleRenameClose();
-                      }}
-                    >
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <PopoverTrigger asChild>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRenameClick(session);
-                              }}
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Rename
-                            </DropdownMenuItem>
-                          </PopoverTrigger>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(session.id);
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <PopoverContent
-                        align="start"
-                        side="right"
-                        className="w-80"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-medium">Rename Session</h4>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={handleRenameClose}
-                              aria-label="Close"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <div className="space-y-2">
-                            <Input
-                              ref={renameInputRef}
-                              value={renameValue}
-                              onChange={(e) => {
-                                setRenameValue(e.target.value);
-                                setRenameError(null);
-                              }}
-                              onKeyDown={handleRenameKeyDown}
-                              placeholder="Enter session title"
-                              maxLength={255}
-                              disabled={isRenaming}
-                              aria-label="Session title"
-                              aria-invalid={!!renameError}
-                              aria-describedby={renameError ? "rename-error" : undefined}
-                            />
-                            {renameError && (
-                              <p
-                                id="rename-error"
-                                className="text-xs text-destructive"
-                              >
-                                {renameError}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleRenameClose}
-                              disabled={isRenaming}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={handleRenameSubmit}
-                              disabled={isRenaming || !renameValue.trim()}
-                            >
-                              {isRenaming ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Saving
-                                </>
-                              ) : (
-                                "Save"
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRenameClick(session);
+                          }}
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(session.id);
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
@@ -345,6 +261,69 @@ export function Sidebar({
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={renameSessionId !== null}
+        onOpenChange={(open) => {
+          if (!open) handleRenameClose();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Session</DialogTitle>
+            <DialogDescription>
+              Enter a new name for this conversation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              ref={renameInputRef}
+              value={renameValue}
+              onChange={(e) => {
+                setRenameValue(e.target.value);
+                setRenameError(null);
+              }}
+              onKeyDown={handleRenameKeyDown}
+              placeholder="Enter session title"
+              maxLength={255}
+              disabled={isRenaming}
+              aria-label="Session title"
+              aria-invalid={!!renameError}
+              aria-describedby={renameError ? "rename-error" : undefined}
+            />
+            {renameError && (
+              <p
+                id="rename-error"
+                className="text-xs text-destructive mt-2"
+              >
+                {renameError}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleRenameClose}
+              disabled={isRenaming}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRenameSubmit}
+              disabled={isRenaming || !renameValue.trim()}
+            >
+              {isRenaming ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving
+                </>
+              ) : (
+                "Save"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
