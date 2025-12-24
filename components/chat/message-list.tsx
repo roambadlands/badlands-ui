@@ -89,7 +89,11 @@ export function MessageList({
     <div ref={containerRef} className="flex-1 overflow-y-auto">
       <div className="divide-y divide-border">
         {messages.map((message) => (
-          <MessageItem key={message.id} message={message} />
+          <MessageItem
+            key={message.id}
+            message={message}
+            responseTimeMs={message.response_time_ms}
+          />
         ))}
 
         {/* Show waiting indicator when streaming but no content yet */}

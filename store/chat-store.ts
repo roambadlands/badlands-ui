@@ -12,6 +12,8 @@ interface ChatStore {
   // Progress state
   currentPhase: ProgressPhase | null;
   phaseStartedAt: number | null;
+  currentToolName: string | null;
+  currentIteration: number | null;
 
   // Actions
   startStreaming: () => AbortController;
@@ -28,9 +30,9 @@ interface ChatStore {
   resetStreaming: () => void;
 
   // Progress actions
-  setProgress: (phase: ProgressPhase, startedAt: number) => void;
+  setProgress: (phase: ProgressPhase, startedAt: number, toolName?: string, iteration?: number) => void;
 
-  // Getters for tool calls as array
+  // Getters
   getToolCalls: () => ToolCall[];
 }
 
@@ -42,6 +44,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   abortController: null,
   currentPhase: null,
   phaseStartedAt: null,
+  currentToolName: null,
+  currentIteration: null,
 
   startStreaming: () => {
     const controller = new AbortController();
@@ -53,6 +57,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       abortController: controller,
       currentPhase: null,
       phaseStartedAt: null,
+      currentToolName: null,
+      currentIteration: null,
     });
     return controller;
   },
@@ -117,14 +123,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       abortController: null,
       currentPhase: null,
       phaseStartedAt: null,
+      currentToolName: null,
+      currentIteration: null,
     });
   },
 
-  setProgress: (phase, startedAt) => {
-    console.log("[ChatStore] setProgress:", phase, startedAt);
+  setProgress: (phase, startedAt, toolName, iteration) => {
+    console.log("[ChatStore] setProgress:", phase, startedAt, toolName, iteration);
     set({
       currentPhase: phase,
       phaseStartedAt: startedAt,
+      currentToolName: toolName ?? null,
+      currentIteration: iteration ?? null,
     });
   },
 

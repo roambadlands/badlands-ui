@@ -45,6 +45,7 @@ export interface Message {
   created_at: string;
   tool_calls?: ToolCall[];
   citations?: Citation[];
+  response_time_ms?: number;
 }
 
 export interface MessagesResponse {
@@ -137,6 +138,8 @@ export type ProgressPhase =
   | "loading_context"
   | "loading_tools"
   | "thinking"
+  | "calling_tool"
+  | "iteration"
   | "responding";
 
 export interface SSEProgressEvent {
@@ -144,6 +147,8 @@ export interface SSEProgressEvent {
   data: {
     phase: ProgressPhase;
     started_at: number; // Unix timestamp in milliseconds
+    tool_name?: string; // Tool name for calling_tool phase
+    iteration?: number; // Iteration number for iteration phase (1-based)
   };
 }
 
@@ -153,6 +158,8 @@ export const PHASE_LABELS: Record<ProgressPhase, string> = {
   loading_context: "Loading context",
   loading_tools: "Loading tools",
   thinking: "Thinking",
+  calling_tool: "Calling tool",
+  iteration: "Processing",
   responding: "Responding",
 };
 

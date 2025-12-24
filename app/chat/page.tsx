@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ChatLayout } from "@/components/layout/chat-layout";
 import { MessageList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/chat-input";
@@ -51,7 +52,7 @@ export default function ChatPage() {
       setActiveSession(newSession.id);
       router.push(`/chat/${newSession.id}`);
     } catch (error) {
-      console.error("Failed to create session:", error);
+      toast.error("Failed to create chat session");
     }
   }, [createSession, setActiveSession, router]);
 
@@ -74,7 +75,7 @@ export default function ChatPage() {
           router.push("/chat");
         }
       } catch (error) {
-        console.error("Failed to delete session:", error);
+        toast.error("Failed to delete session");
       }
     },
     [deleteSession, activeSessionId, setActiveSession, router]
@@ -112,7 +113,7 @@ export default function ChatPage() {
                   }, 1500);
                 },
                 onError: (code, message) => {
-                  console.error(`Stream error [${code}]:`, message);
+                  toast.error(message || "Failed to get response");
                   resetStreaming();
                 },
               },
@@ -120,12 +121,12 @@ export default function ChatPage() {
             );
           } catch (error) {
             if ((error as Error).name !== "AbortError") {
-              console.error("Stream error:", error);
+              toast.error((error as Error).message || "Failed to get response");
             }
             resetStreaming();
           }
         } catch (error) {
-          console.error("Failed to create session:", error);
+          toast.error("Failed to create chat session");
         }
         return;
       }
@@ -170,7 +171,7 @@ export default function ChatPage() {
               }, 1500);
             },
             onError: (code, message) => {
-              console.error(`Stream error [${code}]:`, message);
+              toast.error(message || "Failed to get response");
               resetStreaming();
             },
           },
@@ -178,7 +179,7 @@ export default function ChatPage() {
         );
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
-          console.error("Stream error:", error);
+          toast.error((error as Error).message || "Failed to get response");
         }
         resetStreaming();
       }

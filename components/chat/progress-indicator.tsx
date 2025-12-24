@@ -7,11 +7,20 @@ import { PHASE_LABELS, type ProgressPhase } from "@/lib/types";
 interface ProgressIndicatorProps {
   phase: ProgressPhase;
   startedAt: number;
+  toolName?: string;
+  iteration?: number;
 }
 
-export function ProgressIndicator({ phase, startedAt }: ProgressIndicatorProps) {
+export function ProgressIndicator({ phase, startedAt, toolName, iteration }: ProgressIndicatorProps) {
   const elapsed = useElapsedTime(startedAt);
-  const label = PHASE_LABELS[phase] || phase;
+
+  // Build dynamic label based on phase and metadata
+  let label = PHASE_LABELS[phase] || phase;
+  if (phase === "calling_tool" && toolName) {
+    label = `Calling ${toolName}`;
+  } else if (phase === "iteration" && iteration) {
+    label = `Step ${iteration}`;
+  }
 
   return (
     <div className="flex items-center gap-2 text-muted-foreground">

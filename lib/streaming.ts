@@ -65,7 +65,7 @@ export interface StreamCallbacks {
   ) => void;
   onDone?: (messageId: string) => void;
   onError?: (code: string, message: string) => void;
-  onProgress?: (phase: ProgressPhase, startedAt: number) => void;
+  onProgress?: (phase: ProgressPhase, startedAt: number, toolName?: string, iteration?: number) => void;
 }
 
 /**
@@ -147,8 +147,8 @@ function handleSSEEvent(event: SSEEvent, callbacks: StreamCallbacks): void {
       callbacks.onError?.(event.data.code, event.data.message);
       break;
     case "progress":
-      console.log("[SSE] Progress event:", event.data.phase, event.data.started_at);
-      callbacks.onProgress?.(event.data.phase, event.data.started_at);
+      console.log("[SSE] Progress event:", event.data.phase, event.data.started_at, event.data.tool_name, event.data.iteration);
+      callbacks.onProgress?.(event.data.phase, event.data.started_at, event.data.tool_name, event.data.iteration);
       break;
   }
 }

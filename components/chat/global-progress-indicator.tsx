@@ -7,11 +7,18 @@ import { PHASE_LABELS } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function GlobalProgressIndicator() {
-  const { isStreaming, currentPhase, phaseStartedAt } = useChatStore();
+  const { isStreaming, currentPhase, phaseStartedAt, currentToolName, currentIteration } = useChatStore();
   const elapsed = useElapsedTime(phaseStartedAt ?? 0);
 
   const isVisible = isStreaming && currentPhase && phaseStartedAt;
-  const label = currentPhase ? (PHASE_LABELS[currentPhase] || currentPhase) : "";
+
+  // Build dynamic label based on phase and metadata
+  let label = currentPhase ? (PHASE_LABELS[currentPhase] || currentPhase) : "";
+  if (currentPhase === "calling_tool" && currentToolName) {
+    label = `Calling ${currentToolName}`;
+  } else if (currentPhase === "iteration" && currentIteration) {
+    label = `Step ${currentIteration}`;
+  }
 
   return (
     <div

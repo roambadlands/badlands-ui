@@ -26,6 +26,7 @@ interface MessageItemProps {
   streamingContent?: string;
   toolCalls?: ToolCall[];
   citations?: Citation[];
+  responseTimeMs?: number;
 }
 
 export function MessageItem({
@@ -34,6 +35,7 @@ export function MessageItem({
   streamingContent,
   toolCalls,
   citations,
+  responseTimeMs,
 }: MessageItemProps) {
   const isUser = message.role === "user";
   const rawContent = isStreaming ? streamingContent : message.content;
@@ -280,6 +282,14 @@ export function MessageItem({
             {content}
           </ReactMarkdown>
         </div>
+
+        {!isUser && responseTimeMs !== undefined && (
+          <div className="mt-2 text-xs text-muted-foreground">
+            {responseTimeMs < 1000
+              ? `${responseTimeMs}ms`
+              : `${(responseTimeMs / 1000).toFixed(1)}s`}
+          </div>
+        )}
       </div>
     </div>
   );
