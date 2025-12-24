@@ -21,6 +21,7 @@ interface MessageListProps {
   streamingToolCalls?: ToolCall[];
   streamingCitations?: Citation[];
   onSelectPrompt?: (prompt: string) => void;
+  onRetryMessage?: (messageId: string) => void;
 }
 
 export function MessageList({
@@ -32,6 +33,7 @@ export function MessageList({
   streamingToolCalls,
   streamingCitations,
   onSelectPrompt,
+  onRetryMessage,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,6 +124,11 @@ export function MessageList({
             key={message.id}
             message={message}
             responseTimeMs={message.response_time_ms}
+            onRetry={
+              message.role === "assistant" && onRetryMessage
+                ? () => onRetryMessage(message.id)
+                : undefined
+            }
           />
         ))}
 
@@ -132,7 +139,7 @@ export function MessageList({
               <Bot className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <div className="font-medium text-sm mb-1">Assistant</div>
+              <div className="font-medium text-sm mb-1">Badlands AI</div>
               <div className="flex items-center gap-1 text-muted-foreground">
                 <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />

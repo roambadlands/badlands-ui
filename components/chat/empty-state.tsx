@@ -63,7 +63,7 @@ export function EmptyState({ onSelectPrompt }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center h-full px-4 py-8">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold mb-2">Welcome to THORChain Assistant</h2>
+        <h2 className="text-2xl font-bold mb-2">Welcome to Badlands AI</h2>
         <p className="text-muted-foreground">
           Ask anything about THORChain, or try one of these:
         </p>

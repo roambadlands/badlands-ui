@@ -9,7 +9,7 @@ import remarkEmoji from "remark-emoji";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
 import rehypeSanitize from "rehype-sanitize";
-import { User, Bot, ChevronRight, Copy, Check } from "lucide-react";
+import { User, Bot, ChevronRight, Copy, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sanitizeOptions, convertAsciiTablesToMarkdown } from "@/lib/markdown";
 import { CodeBlock } from "./code-block";
@@ -120,6 +120,7 @@ interface MessageItemProps {
   citations?: Citation[];
   responseTimeMs?: number;
   contentBlocks?: ContentBlockType[];
+  onRetry?: () => void;
 }
 
 export function MessageItem({
@@ -131,6 +132,7 @@ export function MessageItem({
   citations,
   responseTimeMs,
   contentBlocks,
+  onRetry,
 }: MessageItemProps) {
   const isUser = message.role === "user";
   const rawContent = isStreaming ? streamingContent : message.content;
@@ -191,7 +193,7 @@ export function MessageItem({
 
       <div className="flex-1 overflow-hidden">
         <div className="font-medium text-sm mb-1">
-          {isUser ? "You" : "Assistant"}
+          {isUser ? "You" : "Badlands AI"}
         </div>
 
         {!isUser && displayToolCalls.length > 0 && (
@@ -426,6 +428,7 @@ export function MessageItem({
           isUser={isUser}
           responseTimeMs={displayResponseTime}
           createdAt={message.created_at}
+          onRetry={onRetry}
         />
       </div>
     </div>
@@ -483,11 +486,13 @@ function MessageFooter({
   isUser,
   responseTimeMs,
   createdAt,
+  onRetry,
 }: {
   content: string;
   isUser: boolean;
   responseTimeMs?: number;
   createdAt?: string;
+  onRetry?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -527,6 +532,22 @@ function MessageFooter({
           {copied ? "Copied!" : "Copy"}
         </TooltipContent>
       </Tooltip>
+      {!isUser && onRetry && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onRetry}
+              className="hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Try again"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            Try again
+          </TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 }
