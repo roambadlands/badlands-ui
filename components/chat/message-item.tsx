@@ -541,7 +541,7 @@ function MessageFooter({
       {!isUser && responseTimeMs !== undefined && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="cursor-default ml-auto">⏱️ {formatElapsedTime(responseTimeMs)}</span>
+            <span className="cursor-default">⏱️ {formatElapsedTime(responseTimeMs)}</span>
           </TooltipTrigger>
           <TooltipContent side="top">
             {createdAt ? formatFullDateTime(createdAt) : "Response time"}
