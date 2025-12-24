@@ -167,7 +167,7 @@ export function Sidebar({
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-2">
+        <ScrollArea className="flex-1 px-2 overflow-hidden">
           {isLoading ? (
             <div className="space-y-2 p-2">
               {Array.from({ length: 5 }).map((_, i) => (
