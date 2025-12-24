@@ -45,6 +45,13 @@ export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
         <span className="ml-auto">{statusIcon[toolCall.status]}</span>
       </button>
 
+      {/* Show error summary even when collapsed */}
+      {!isExpanded && toolCall.error && (
+        <div className="px-3 pb-3 pt-0">
+          <p className="text-xs text-destructive line-clamp-2">{toolCall.error}</p>
+        </div>
+      )}
+
       {isExpanded && (
         <div className="border-t border-border p-3 space-y-3">
           {toolCall.input && (
@@ -74,7 +81,7 @@ export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
               <div className="text-xs font-medium text-destructive mb-1">
                 Error
               </div>
-              <pre className="text-xs bg-destructive/10 text-destructive p-2 rounded">
+              <pre className="text-xs bg-destructive/10 text-destructive p-2 rounded whitespace-pre-wrap break-words">
                 {toolCall.error}
               </pre>
             </div>
