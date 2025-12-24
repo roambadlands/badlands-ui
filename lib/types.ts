@@ -37,11 +37,61 @@ export interface SessionWithMessages extends Session {
   messages: Message[];
 }
 
+// Content block types for structured message rendering
+export type ContentBlock =
+  | TextBlock
+  | CodeBlock
+  | HeadingBlock
+  | ListBlock
+  | BlockquoteBlock
+  | TableBlock
+  | HrBlock;
+
+export interface TextBlock {
+  type: "text";
+  text: string;
+}
+
+export interface CodeBlock {
+  type: "code";
+  code: string;
+  language?: string;
+}
+
+export interface HeadingBlock {
+  type: "heading";
+  text: string;
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+}
+
+export interface ListBlock {
+  type: "list";
+  items: string[];
+  ordered: boolean;
+}
+
+export interface BlockquoteBlock {
+  type: "blockquote";
+  text: string;
+}
+
+export interface TableBlock {
+  type: "table";
+  headers: string[];
+  rows: string[][];
+}
+
+export interface HrBlock {
+  type: "hr";
+}
+
 // Message types
 export interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
+  content_format?: "markdown" | "text";
+  content_blocks?: ContentBlock[];
   created_at: string;
   tool_calls?: ToolCall[];
   citations?: Citation[];
