@@ -125,8 +125,13 @@ export function Sidebar({
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffDays = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+
+    // Normalize to start of day (midnight) for calendar day comparison
+    const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const diffDays = Math.round(
+      (nowDay.getTime() - dateDay.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     if (diffDays === 0) {
