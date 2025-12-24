@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+
+# Next.js build output
+.next
+
+# Testing
+coverage
+playwright-report
+test-results
+
+# IDE
+.idea
+.vscode
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Environment files (don't bake secrets into image)
+.env
+.env.*
+!.env.example
+
+# Kubernetes manifests
+k8s
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
