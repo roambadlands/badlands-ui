@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ChatLayout } from "@/components/layout/chat-layout";
 import { MessageList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/chat-input";
+import { GlobalProgressIndicator } from "@/components/chat/global-progress-indicator";
 import { useSessions, useSession, useCreateSession, useDeleteSession } from "@/lib/hooks/use-sessions";
 import { useSessionStore } from "@/store/session-store";
 import { useChatStore } from "@/store/chat-store";
@@ -208,11 +209,13 @@ export default function ChatPage() {
     >
       <MessageList
         messages={messages}
+        sessionId={activeSessionId}
         isStreaming={isStreaming}
         streamingContent={streamingContent}
         streamingToolCalls={getToolCalls()}
         streamingCitations={streamingCitations}
       />
+      <GlobalProgressIndicator />
       <ChatInput
         onSend={handleSendMessage}
         onStop={stopStreaming}

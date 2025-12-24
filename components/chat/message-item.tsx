@@ -15,8 +15,7 @@ import { CodeBlock } from "./code-block";
 import { MermaidDiagram } from "./mermaid-diagram";
 import { ToolCallDisplay } from "./tool-call";
 import { CitationDisplay } from "./citation";
-import { ProgressIndicator } from "./progress-indicator";
-import type { Message, ToolCall, Citation, ProgressPhase } from "@/lib/types";
+import type { Message, ToolCall, Citation } from "@/lib/types";
 
 import "highlight.js/styles/github-dark.css";
 import "katex/dist/katex.min.css";
@@ -27,8 +26,6 @@ interface MessageItemProps {
   streamingContent?: string;
   toolCalls?: ToolCall[];
   citations?: Citation[];
-  currentPhase?: ProgressPhase | null;
-  phaseStartedAt?: number | null;
 }
 
 export function MessageItem({
@@ -37,8 +34,6 @@ export function MessageItem({
   streamingContent,
   toolCalls,
   citations,
-  currentPhase,
-  phaseStartedAt,
 }: MessageItemProps) {
   const isUser = message.role === "user";
   const rawContent = isStreaming ? streamingContent : message.content;
@@ -284,17 +279,7 @@ export function MessageItem({
           >
             {content}
           </ReactMarkdown>
-
-          {isStreaming && (
-            <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
-          )}
         </div>
-
-        {isStreaming && currentPhase && phaseStartedAt && (
-          <div className="mt-2">
-            <ProgressIndicator phase={currentPhase} startedAt={phaseStartedAt} />
-          </div>
-        )}
       </div>
     </div>
   );
