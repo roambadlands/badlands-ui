@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Bot } from "lucide-react";
 import { MessageItem } from "./message-item";
 import type { Message, ToolCall, Citation } from "@/lib/types";
 
 // Store scroll positions outside component to persist across remounts
 const scrollPositions = new Map<string, number>();
+
+// Threshold in pixels to consider "at bottom" (accounts for small variations)
+const SCROLL_THRESHOLD = 50;
 
 interface MessageListProps {
   messages: Message[];
@@ -28,19 +31,30 @@ export function MessageList({
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastMessageCount = useRef(0);
+  const isAtBottomRef = useRef(true);
 
-  // Save scroll position on every scroll
+  // Check if user is at the bottom of the scroll
+  const checkIfAtBottom = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return true;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    return scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
+  }, []);
+
+  // Save scroll position and track if at bottom on every scroll
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !sessionId) return;
 
     const handleScroll = () => {
       scrollPositions.set(sessionId, container.scrollTop);
+      isAtBottomRef.current = checkIfAtBottom();
     };
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [sessionId]);
+  }, [sessionId, checkIfAtBottom]);
 
   // Restore scroll position or default to bottom when session changes
   useEffect(() => {
@@ -51,15 +65,17 @@ export function MessageList({
     const timer = setTimeout(() => {
       if (scrollPositions.has(sessionId)) {
         container.scrollTop = scrollPositions.get(sessionId)!;
+        isAtBottomRef.current = checkIfAtBottom();
       } else {
         // New session - scroll to bottom
         container.scrollTop = container.scrollHeight;
+        isAtBottomRef.current = true;
       }
     }, 100);
 
     lastMessageCount.current = 0;
     return () => clearTimeout(timer);
-  }, [sessionId]);
+  }, [sessionId, checkIfAtBottom]);
 
   // Scroll to bottom when user sends a message
   useEffect(() => {
@@ -68,9 +84,17 @@ export function MessageList({
 
     if (newCount > lastMessageCount.current && lastMessage?.role === "user") {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      isAtBottomRef.current = true;
     }
     lastMessageCount.current = newCount;
   }, [messages]);
+
+  // Auto-scroll during streaming if user was at bottom
+  useEffect(() => {
+    if (isStreaming && isAtBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [isStreaming, streamingContent, streamingToolCalls]);
 
   // Create a streaming message placeholder
   // Show when streaming AND (has content OR has tool calls)
