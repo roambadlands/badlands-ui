@@ -123,3 +123,95 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Code diff highlighting */
+.hljs-addition {
+  background-color: rgba(46, 160, 67, 0.15);
+  color: #3fb950;
+}
+
+.hljs-deletion {
+  background-color: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+}
+
+/* Diff code block styling */
+.language-diff .hljs-addition,
+.language-diff .hljs-deletion {
+  display: block;
+  width: 100%;
+  padding: 0 0.5rem;
+  margin: 0 -0.5rem;
+}
+
+/* KaTeX math styling adjustments */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
+.katex {
+  font-size: 1.1em;
+}
+
+/* Task list styling */
+.task-list-item {
+  list-style-type: none !important;
+  margin-left: -1.5rem;
+}
+
+.task-list-item input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+/* Footnotes styling */
+.footnotes {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.footnotes hr {
+  display: none;
+}
+
+.footnotes ol {
+  padding-left: 1.5rem;
+}
+
+.footnotes li {
+  margin-bottom: 0.5rem;
+}
+
+.footnotes .footnote-backref {
+  margin-left: 0.25rem;
+  text-decoration: none;
+}
+
+/* Long URL/string word wrap */
+.prose a,
+.prose code {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.prose pre code {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* Mermaid diagram container */
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Collapsible sections */
+details > *:not(summary) {
+  padding: 0 1rem 1rem;
+}
+
+details[open] > summary {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}

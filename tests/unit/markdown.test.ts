@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidUrl, validateMessage, MAX_MESSAGE_LENGTH } from "@/lib/markdown";
+import { isValidUrl, validateMessage, MAX_MESSAGE_LENGTH, convertAsciiTablesToMarkdown } from "@/lib/markdown";
 
 describe("isValidUrl", () => {
   it("should accept valid http URLs", () => {
@@ -64,5 +64,89 @@ describe("validateMessage", () => {
     const maxMessage = "a".repeat(MAX_MESSAGE_LENGTH);
     const result = validateMessage(maxMessage);
     expect(result.valid).toBe(true);
+  });
+});
+
+describe("convertAsciiTablesToMarkdown", () => {
+  it("should convert simple ASCII table to markdown", () => {
+    const input = `+-------+-------+
+| Field | Value |
++-------+-------+
+| From  | BTC   |
+| To    | ETH   |
++-------+-------+`;
+
+    const expected = `| Field | Value |
+|---|---|
+| From | BTC |
+| To | ETH |`;
+
+    expect(convertAsciiTablesToMarkdown(input)).toBe(expected);
+  });
+
+  it("should handle multiple tables", () => {
+    const input = `Table 1:
++------+------+
+| A    | B    |
++------+------+
+| 1    | 2    |
++------+------+
+
+Table 2:
++------+------+
+| X    | Y    |
++------+------+
+| 3    | 4    |
++------+------+`;
+
+    const result = convertAsciiTablesToMarkdown(input);
+    expect(result).toContain("| A | B |");
+    expect(result).toContain("| 1 | 2 |");
+    expect(result).toContain("| X | Y |");
+    expect(result).toContain("| 3 | 4 |");
+    expect(result).toContain("|---|---|");
+    expect(result).toContain("Table 1:");
+    expect(result).toContain("Table 2:");
+  });
+
+  it("should handle tables with more columns", () => {
+    const input = `+------+------+------+
+| Fee  | Base | ETH  |
++------+------+------+
+| Liq  | 1000 | 0.01 |
++------+------+------+`;
+
+    const expected = `| Fee | Base | ETH |
+|---|---|---|
+| Liq | 1000 | 0.01 |`;
+
+    expect(convertAsciiTablesToMarkdown(input)).toBe(expected);
+  });
+
+  it("should preserve non-table content", () => {
+    const input = `Here is some text.
+
+And more text after.`;
+
+    expect(convertAsciiTablesToMarkdown(input)).toBe(input);
+  });
+
+  it("should handle content before and after tables", () => {
+    const input = `Summary:
++------+------+
+| A    | B    |
++------+------+
+| 1    | 2    |
++------+------+
+End of table.`;
+
+    const result = convertAsciiTablesToMarkdown(input);
+    expect(result).toContain("Summary:");
+    expect(result).toContain("| A | B |");
+    expect(result).toContain("End of table.");
+  });
+
+  it("should handle empty input", () => {
+    expect(convertAsciiTablesToMarkdown("")).toBe("");
   });
 });
