@@ -37,6 +37,7 @@ interface SidebarProps {
   onDeleteSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, title: string) => Promise<void>;
   isRenaming?: boolean;
+  width?: number;
 }
 
 export function Sidebar({
@@ -48,6 +49,7 @@ export function Sidebar({
   onDeleteSession,
   onRenameSession,
   isRenaming = false,
+  width,
 }: SidebarProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
@@ -159,7 +161,10 @@ export function Sidebar({
 
   return (
     <>
-      <div className="w-64 border-r border-border flex flex-col h-full bg-sidebar">
+      <div
+        className="border-r border-border flex flex-col h-full bg-sidebar flex-shrink-0"
+        style={{ width: width ? `${width}px` : "256px" }}
+      >
         <div className="p-4">
           <Button onClick={onNewChat} className="w-full gap-2">
             <Plus className="h-4 w-4" />
@@ -202,118 +207,119 @@ export function Sidebar({
                       {formatDate(session.created_at)}
                     </div>
                   </div>
-                  <Popover
-                    open={renameSessionId === session.id}
-                    onOpenChange={(open) => {
-                      if (!open) handleRenameClose();
-                    }}
-                  >
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <PopoverTrigger asChild>
+                  <div className="shrink-0">
+                    <Popover
+                      open={renameSessionId === session.id}
+                      onOpenChange={(open) => {
+                        if (!open) handleRenameClose();
+                      }}
+                    >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <PopoverTrigger asChild>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRenameClick(session);
+                              }}
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Rename
+                            </DropdownMenuItem>
+                          </PopoverTrigger>
                           <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRenameClick(session);
+                              handleDeleteClick(session.id);
                             }}
                           >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Rename
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
                           </DropdownMenuItem>
-                        </PopoverTrigger>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick(session.id);
-                          }}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <PopoverContent
-                      align="start"
-                      side="right"
-                      className="w-80"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium">Rename Session</h4>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={handleRenameClose}
-                            aria-label="Close"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="space-y-2">
-                          <Input
-                            ref={renameInputRef}
-                            value={renameValue}
-                            onChange={(e) => {
-                              setRenameValue(e.target.value);
-                              setRenameError(null);
-                            }}
-                            onKeyDown={handleRenameKeyDown}
-                            placeholder="Enter session title"
-                            maxLength={255}
-                            disabled={isRenaming}
-                            aria-label="Session title"
-                            aria-invalid={!!renameError}
-                            aria-describedby={renameError ? "rename-error" : undefined}
-                          />
-                          {renameError && (
-                            <p
-                              id="rename-error"
-                              className="text-xs text-destructive"
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <PopoverContent
+                        align="start"
+                        side="right"
+                        className="w-80"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-medium">Rename Session</h4>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={handleRenameClose}
+                              aria-label="Close"
                             >
-                              {renameError}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleRenameClose}
-                            disabled={isRenaming}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={handleRenameSubmit}
-                            disabled={isRenaming || !renameValue.trim()}
-                          >
-                            {isRenaming ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving
-                              </>
-                            ) : (
-                              "Save"
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="space-y-2">
+                            <Input
+                              ref={renameInputRef}
+                              value={renameValue}
+                              onChange={(e) => {
+                                setRenameValue(e.target.value);
+                                setRenameError(null);
+                              }}
+                              onKeyDown={handleRenameKeyDown}
+                              placeholder="Enter session title"
+                              maxLength={255}
+                              disabled={isRenaming}
+                              aria-label="Session title"
+                              aria-invalid={!!renameError}
+                              aria-describedby={renameError ? "rename-error" : undefined}
+                            />
+                            {renameError && (
+                              <p
+                                id="rename-error"
+                                className="text-xs text-destructive"
+                              >
+                                {renameError}
+                              </p>
                             )}
-                          </Button>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleRenameClose}
+                              disabled={isRenaming}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={handleRenameSubmit}
+                              disabled={isRenaming || !renameValue.trim()}
+                            >
+                              {isRenaming ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Saving
+                                </>
+                              ) : (
+                                "Save"
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
               ))}
             </div>

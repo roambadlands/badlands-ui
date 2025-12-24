@@ -16,6 +16,7 @@ mermaid.initialize({
   theme: "dark",
   securityLevel: "strict",
   fontFamily: "inherit",
+  suppressErrorRendering: true,
 });
 
 let diagramId = 0;
@@ -32,7 +33,13 @@ export function MermaidDiagram({ children, className }: MermaidDiagramProps) {
 
       try {
         // Validate the diagram syntax first
-        await mermaid.parse(children);
+        const parseResult = await mermaid.parse(children, { suppressErrors: true });
+
+        if (!parseResult) {
+          setError("Invalid diagram syntax - unsupported diagram type");
+          setSvg("");
+          return;
+        }
 
         // Render the diagram
         const { svg: renderedSvg } = await mermaid.render(idRef.current, children);
@@ -45,9 +52,16 @@ export function MermaidDiagram({ children, className }: MermaidDiagramProps) {
 
         setSvg(sanitizedSvg);
         setError(null);
-      } catch (err) {
-        console.error("Mermaid rendering error:", err);
-        setError(err instanceof Error ? err.message : "Failed to render diagram");
+      } catch (err: unknown) {
+        // Handle Mermaid-specific errors
+        const errorMessage = err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "Failed to render diagram";
+
+        console.error("Mermaid rendering error:", errorMessage);
+        setError(errorMessage);
         setSvg("");
       }
     };
