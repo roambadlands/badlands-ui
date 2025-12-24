@@ -425,6 +425,7 @@ export function MessageItem({
           content={content}
           isUser={isUser}
           responseTimeMs={displayResponseTime}
+          createdAt={message.created_at}
         />
       </div>
     </div>
@@ -459,16 +460,34 @@ function formatElapsedTime(ms: number): string {
 }
 
 /**
+ * Format a date as a full human-readable string.
+ */
+function formatFullDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+/**
  * Footer for messages with copy button and response time (for assistant).
  */
 function MessageFooter({
   content,
   isUser,
   responseTimeMs,
+  createdAt,
 }: {
   content: string;
   isUser: boolean;
   responseTimeMs?: number;
+  createdAt?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -481,7 +500,14 @@ function MessageFooter({
   return (
     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
       {!isUser && responseTimeMs !== undefined && (
-        <span>⏱️ {formatElapsedTime(responseTimeMs)}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="cursor-default">⏱️ {formatElapsedTime(responseTimeMs)}</span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {createdAt ? formatFullDateTime(createdAt) : "Response time"}
+          </TooltipContent>
+        </Tooltip>
       )}
       <Tooltip>
         <TooltipTrigger asChild>
