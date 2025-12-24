@@ -34,6 +34,7 @@ export default function ChatPage() {
     stopStreaming,
     resetStreaming,
     getToolCalls,
+    getContentBlocks,
     streamingCitations,
   } = useChatStore();
 
@@ -91,6 +92,22 @@ export default function ChatPage() {
           const newSession = await createSession.mutateAsync({ mode: "chat" });
           setActiveSession(newSession.id);
           router.push(`/chat/${newSession.id}`);
+
+          // Add optimistic user message for the new session
+          const userMessage: Message = {
+            id: `temp-${Date.now()}`,
+            role: "user",
+            content,
+            created_at: new Date().toISOString(),
+          };
+
+          queryClient.setQueryData(
+            ["session", newSession.id],
+            {
+              ...newSession,
+              messages: [userMessage],
+            }
+          );
 
           // Now send the message to the new session
           const controller = startStreaming();
@@ -228,6 +245,7 @@ export default function ChatPage() {
         sessionId={activeSessionId}
         isStreaming={isStreaming}
         streamingContent={streamingContent}
+        streamingContentBlocks={getContentBlocks()}
         streamingToolCalls={getToolCalls()}
         streamingCitations={streamingCitations}
         onSelectPrompt={handleSendMessage}
