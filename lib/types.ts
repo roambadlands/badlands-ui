@@ -50,7 +50,8 @@ export type ContentBlock =
   | TaskListBlock
   | CalloutBlock
   | ImageBlock
-  | DetailsBlock;
+  | DetailsBlock
+  | ChartBlock;
 
 export interface TextBlock {
   type: "text";
@@ -124,6 +125,48 @@ export interface DetailsBlock {
   type: "details";
   text: string;
   children?: ContentBlock[];
+}
+
+// Chart block types
+export type ChartType = "bar" | "line" | "pie" | "area" | "scatter";
+
+export interface ChartAxisConfig {
+  label?: string;
+  data?: string[];
+}
+
+export interface ChartSeriesItem {
+  name: string;
+  data: number[];
+}
+
+export interface PieSeriesItem {
+  name: string;
+  value: number;
+}
+
+export interface ScatterPoint {
+  x: number;
+  y: number;
+}
+
+export interface ScatterSeriesItem {
+  name: string;
+  data: ScatterPoint[];
+}
+
+export interface ChartData {
+  title?: string;
+  x_axis?: ChartAxisConfig;
+  y_axis?: ChartAxisConfig;
+  series?: ChartSeriesItem[] | PieSeriesItem[] | ScatterSeriesItem[];
+}
+
+export interface ChartBlock {
+  type: "chart";
+  chart_type: ChartType;
+  chart_title?: string;
+  chart_data: ChartData;
 }
 
 // Message types

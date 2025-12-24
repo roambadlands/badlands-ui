@@ -9,6 +9,7 @@ import { ChevronRight, Info, AlertTriangle, Lightbulb, AlertCircle, ShieldAlert 
 import { cn } from "@/lib/utils";
 import { CodeBlock as CodeBlockComponent } from "./code-block";
 import { MermaidDiagram } from "./mermaid-diagram";
+import { ChartBlockRenderer } from "./chart-block";
 import type {
   ContentBlock,
   TextBlock,
@@ -22,6 +23,7 @@ import type {
   CalloutBlock,
   ImageBlock,
   DetailsBlock,
+  ChartBlock,
   CalloutType,
 } from "@/lib/types";
 
@@ -75,6 +77,8 @@ function BlockRenderer({ block }: BlockRendererProps) {
       return <ImageBlockRenderer block={block} />;
     case "details":
       return <DetailsBlockRenderer block={block} />;
+    case "chart":
+      return <ChartBlockRenderer block={block as ChartBlock} />;
     default:
       return null;
   }
