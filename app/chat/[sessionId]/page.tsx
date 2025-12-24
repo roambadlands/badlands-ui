@@ -107,6 +107,88 @@ export default function ChatSessionPage() {
     [updateSession]
   );
 
+  // Handle retrying an assistant message (regenerate response)
+  const handleRetryMessage = useCallback(
+    async (messageId: string) => {
+      // Find the assistant message and the user message that preceded it
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
+      if (messageIndex === -1) return;
+
+      // Find the preceding user message
+      let userMessage: Message | null = null;
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (messages[i].role === "user") {
+          userMessage = messages[i];
+          break;
+        }
+      }
+
+      if (!userMessage) return;
+
+      // Remove the assistant message(s) after the user message from the cache
+      queryClient.setQueryData(
+        ["session", sessionId],
+        (old: typeof sessionData) =>
+          old
+            ? {
+                ...old,
+                messages: old.messages.slice(0, messageIndex),
+              }
+            : old
+      );
+
+      // Start streaming the new response
+      const controller = startStreaming();
+
+      try {
+        await streamMessage(
+          sessionId,
+          { content: userMessage.content },
+          {
+            onContent: appendContent,
+            onContentBlock: addContentBlock,
+            onToolCallStart: addToolCallStart,
+            onToolCallEnd: updateToolCallEnd,
+            onCitation: (source, sourceRef, reference) =>
+              addCitation({ source, source_ref: sourceRef, reference }),
+            onProgress: setProgress,
+            onDone: () => {
+              resetStreaming();
+              queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
+            },
+            onError: (code, message) => {
+              toast.error(message || "Failed to get response");
+              resetStreaming();
+              // Restore original messages on error
+              queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
+            },
+          },
+          controller.signal
+        );
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          toast.error((error as Error).message || "Failed to get response");
+        }
+        resetStreaming();
+        queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
+      }
+    },
+    [
+      messages,
+      sessionId,
+      startStreaming,
+      appendContent,
+      addContentBlock,
+      addToolCallStart,
+      updateToolCallEnd,
+      addCitation,
+      setProgress,
+      resetStreaming,
+      queryClient,
+      sessionData,
+    ]
+  );
+
   // Handle sending a message
   const handleSendMessage = useCallback(
     async (content: string) => {
@@ -200,6 +282,7 @@ export default function ChatSessionPage() {
         streamingToolCalls={getToolCalls()}
         streamingCitations={streamingCitations}
         onSelectPrompt={handleSendMessage}
+        onRetryMessage={handleRetryMessage}
       />
       <GlobalProgressIndicator />
       <ChatInput
