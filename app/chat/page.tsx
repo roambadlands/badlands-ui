@@ -8,7 +8,7 @@ import { ChatLayout } from "@/components/layout/chat-layout";
 import { MessageList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/chat-input";
 import { GlobalProgressIndicator } from "@/components/chat/global-progress-indicator";
-import { useSessions, useSession, useCreateSession, useDeleteSession } from "@/lib/hooks/use-sessions";
+import { useSessions, useSession, useCreateSession, useDeleteSession, useUpdateSession } from "@/lib/hooks/use-sessions";
 import { useSessionStore } from "@/store/session-store";
 import { useChatStore } from "@/store/chat-store";
 import { streamMessage } from "@/lib/streaming";
@@ -43,6 +43,7 @@ export default function ChatPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession(activeSessionId);
   const createSession = useCreateSession();
   const deleteSession = useDeleteSession();
+  const updateSession = useUpdateSession();
 
   const sessions = sessionsData?.sessions || [];
   const messages = sessionData?.messages || [];
@@ -81,6 +82,14 @@ export default function ChatPage() {
       }
     },
     [deleteSession, activeSessionId, setActiveSession, router]
+  );
+
+  // Handle session rename
+  const handleRenameSession = useCallback(
+    async (sessionId: string, title: string) => {
+      await updateSession.mutateAsync({ sessionId, title });
+    },
+    [updateSession]
   );
 
   // Handle sending a message
@@ -239,6 +248,8 @@ export default function ChatPage() {
       onNewChat={handleNewChat}
       onSelectSession={handleSelectSession}
       onDeleteSession={handleDeleteSession}
+      onRenameSession={handleRenameSession}
+      isRenaming={updateSession.isPending}
     >
       <MessageList
         messages={messages}

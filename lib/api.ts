@@ -172,6 +172,13 @@ class APIClient {
     });
   }
 
+  async updateSession(sessionId: string, data: { title: string }): Promise<Session> {
+    return this.fetch<Session>(`/v1/sessions/${sessionId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Budget endpoints
   async getBudget(): Promise<BudgetResponse> {
     return this.fetch<BudgetResponse>("/v1/tenant/budget");

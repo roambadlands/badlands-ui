@@ -139,6 +139,7 @@ function CodeBlockRenderer({ block }: { block: CodeBlock }) {
 
 /**
  * Heading blocks render as h1-h6 based on level.
+ * Text may contain inline markdown (bold, italic, code, links).
  */
 function HeadingBlockRenderer({ block }: { block: HeadingBlock }) {
   const sizeClasses: Record<number, string> = {
@@ -151,22 +152,23 @@ function HeadingBlockRenderer({ block }: { block: HeadingBlock }) {
   };
 
   const className = cn(sizeClasses[block.level], "mt-4 first:mt-0");
+  const content = <InlineMarkdown text={block.text} />;
 
   switch (block.level) {
     case 1:
-      return <h1 className={className}>{block.text}</h1>;
+      return <h1 className={className}>{content}</h1>;
     case 2:
-      return <h2 className={className}>{block.text}</h2>;
+      return <h2 className={className}>{content}</h2>;
     case 3:
-      return <h3 className={className}>{block.text}</h3>;
+      return <h3 className={className}>{content}</h3>;
     case 4:
-      return <h4 className={className}>{block.text}</h4>;
+      return <h4 className={className}>{content}</h4>;
     case 5:
-      return <h5 className={className}>{block.text}</h5>;
+      return <h5 className={className}>{content}</h5>;
     case 6:
-      return <h6 className={className}>{block.text}</h6>;
+      return <h6 className={className}>{content}</h6>;
     default:
-      return <h2 className={className}>{block.text}</h2>;
+      return <h2 className={className}>{content}</h2>;
   }
 }
 
@@ -528,13 +530,14 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
 
 /**
  * Details/collapsible block with nested children.
+ * Summary text may contain inline markdown.
  */
 function DetailsBlockRenderer({ block }: { block: DetailsBlock }) {
   return (
     <details className="my-4 rounded-lg border border-border bg-muted/30 group">
       <summary className="cursor-pointer px-4 py-2 font-medium hover:bg-muted/50 rounded-t-lg list-none flex items-center gap-2">
         <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
-        {block.text}
+        <InlineMarkdown text={block.text} />
       </summary>
       {block.children && block.children.length > 0 && (
         <div className="px-4 pb-4 pt-2">

@@ -13,6 +13,8 @@ interface ChatLayoutProps {
   onNewChat: () => void;
   onSelectSession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => void;
+  onRenameSession: (sessionId: string, title: string) => Promise<void>;
+  isRenaming?: boolean;
 }
 
 export function ChatLayout({
@@ -23,6 +25,8 @@ export function ChatLayout({
   onNewChat,
   onSelectSession,
   onDeleteSession,
+  onRenameSession,
+  isRenaming,
 }: ChatLayoutProps) {
   return (
     <div className="h-screen flex flex-col">
@@ -35,6 +39,8 @@ export function ChatLayout({
           onNewChat={onNewChat}
           onSelectSession={onSelectSession}
           onDeleteSession={onDeleteSession}
+          onRenameSession={onRenameSession}
+          isRenaming={isRenaming}
         />
         <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
       </div>

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Session, CreateSessionRequest } from "@/lib/types";
+import type { CreateSessionRequest } from "@/lib/types";
 
 export function useSessions() {
   return useQuery({
@@ -35,6 +35,19 @@ export function useDeleteSession() {
     mutationFn: (sessionId: string) => api.deleteSession(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    },
+  });
+}
+
+export function useUpdateSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sessionId, title }: { sessionId: string; title: string }) =>
+      api.updateSession(sessionId, { title }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["session", variables.sessionId] });
     },
   });
 }
