@@ -504,16 +504,6 @@ function MessageFooter({
 
   return (
     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-      {!isUser && responseTimeMs !== undefined && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="cursor-default">⏱️ {formatElapsedTime(responseTimeMs)}</span>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            {createdAt ? formatFullDateTime(createdAt) : "Response time"}
-          </TooltipContent>
-        </Tooltip>
-      )}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -545,6 +535,16 @@ function MessageFooter({
           </TooltipTrigger>
           <TooltipContent side="top">
             Try again
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {!isUser && responseTimeMs !== undefined && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="cursor-default ml-auto">⏱️ {formatElapsedTime(responseTimeMs)}</span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {createdAt ? formatFullDateTime(createdAt) : "Response time"}
           </TooltipContent>
         </Tooltip>
       )}
