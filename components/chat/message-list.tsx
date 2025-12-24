@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Bot } from "lucide-react";
 import { MessageItem } from "./message-item";
-import type { Message, ToolCall, Citation } from "@/lib/types";
+import type { Message, ToolCall, Citation, ContentBlock } from "@/lib/types";
 
 // Store scroll positions outside component to persist across remounts
 const scrollPositions = new Map<string, number>();
@@ -16,6 +16,7 @@ interface MessageListProps {
   sessionId?: string | null;
   isStreaming?: boolean;
   streamingContent?: string;
+  streamingContentBlocks?: ContentBlock[];
   streamingToolCalls?: ToolCall[];
   streamingCitations?: Citation[];
 }
@@ -25,6 +26,7 @@ export function MessageList({
   sessionId,
   isStreaming,
   streamingContent,
+  streamingContentBlocks,
   streamingToolCalls,
   streamingCitations,
 }: MessageListProps) {
@@ -142,6 +144,7 @@ export function MessageList({
             message={streamingMessage}
             isStreaming={true}
             streamingContent={streamingContent}
+            streamingContentBlocks={streamingContentBlocks}
             toolCalls={streamingToolCalls}
             citations={streamingCitations}
           />

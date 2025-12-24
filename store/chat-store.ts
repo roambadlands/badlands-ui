@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import type { ToolCall, Citation, ProgressPhase } from "@/lib/types";
+import type { ToolCall, Citation, ProgressPhase, ContentBlock } from "@/lib/types";
 
 interface ChatStore {
   // Streaming state
   isStreaming: boolean;
   streamingContent: string;
+  streamingContentBlocks: Map<number, ContentBlock>;
   streamingToolCalls: Map<string, ToolCall>;
   streamingCitations: Citation[];
   abortController: AbortController | null;
@@ -18,6 +19,7 @@ interface ChatStore {
   // Actions
   startStreaming: () => AbortController;
   appendContent: (text: string) => void;
+  addContentBlock: (index: number, block: ContentBlock) => void;
   addToolCallStart: (id: string, tool: string) => void;
   updateToolCallEnd: (
     id: string,
@@ -34,11 +36,13 @@ interface ChatStore {
 
   // Getters
   getToolCalls: () => ToolCall[];
+  getContentBlocks: () => ContentBlock[];
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
   isStreaming: false,
   streamingContent: "",
+  streamingContentBlocks: new Map(),
   streamingToolCalls: new Map(),
   streamingCitations: [],
   abortController: null,
@@ -52,6 +56,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({
       isStreaming: true,
       streamingContent: "",
+      streamingContentBlocks: new Map(),
       streamingToolCalls: new Map(),
       streamingCitations: [],
       abortController: controller,
@@ -67,6 +72,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set((state) => ({
       streamingContent: state.streamingContent + text,
     }));
+  },
+
+  addContentBlock: (index, block) => {
+    set((state) => {
+      const newBlocks = new Map(state.streamingContentBlocks);
+      newBlocks.set(index, block);
+      return { streamingContentBlocks: newBlocks };
+    });
   },
 
   addToolCallStart: (id, tool) => {
@@ -118,6 +131,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({
       isStreaming: false,
       streamingContent: "",
+      streamingContentBlocks: new Map(),
       streamingToolCalls: new Map(),
       streamingCitations: [],
       abortController: null,
@@ -140,5 +154,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   getToolCalls: () => {
     return Array.from(get().streamingToolCalls.values());
+  },
+
+  getContentBlocks: () => {
+    const blocks = get().streamingContentBlocks;
+    // Sort blocks by index and return as array
+    const sortedEntries = Array.from(blocks.entries()).sort(([a], [b]) => a - b);
+    return sortedEntries.map(([, block]) => block);
   },
 }));

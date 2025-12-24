@@ -16,15 +16,84 @@ import { MermaidDiagram } from "./mermaid-diagram";
 import { ToolCallDisplay } from "./tool-call";
 import { CitationDisplay } from "./citation";
 import { ContentBlockRenderer } from "./content-block-renderer";
+import { parseMarkdownToBlocks } from "@/lib/markdown-parser";
 import type { Message, ToolCall, Citation, ContentBlock as ContentBlockType } from "@/lib/types";
 
 import "highlight.js/styles/github-dark.css";
 import "katex/dist/katex.min.css";
 
+/**
+ * Calculate the remaining content that hasn't been parsed into blocks yet.
+ * This finds the text after the last completed block to show as in-progress content.
+ */
+function calculateRemainingContent(fullContent: string, blocks: ContentBlockType[]): string {
+  if (!fullContent || blocks.length === 0) return fullContent;
+
+  // Reconstruct the text covered by all blocks
+  let consumedLength = 0;
+
+  for (const block of blocks) {
+    // Find where this block's content appears in the full content
+    let blockText = "";
+
+    switch (block.type) {
+      case "text":
+        blockText = block.text;
+        break;
+      case "code":
+        // Code blocks in markdown are fenced: ```lang\ncode\n```
+        blockText = "```" + (block.language || "") + "\n" + block.code + "\n```";
+        break;
+      case "heading":
+        blockText = "#".repeat(block.level) + " " + block.text;
+        break;
+      case "list":
+        blockText = block.items
+          .map((item, i) => (block.ordered ? `${i + 1}. ${item}` : `- ${item}`))
+          .join("\n");
+        break;
+      case "blockquote":
+        blockText = block.text
+          .split("\n")
+          .map((line) => `> ${line}`)
+          .join("\n");
+        break;
+      case "table":
+        // Simplified table reconstruction
+        const headerRow = "| " + block.headers.join(" | ") + " |";
+        const separator = "| " + block.headers.map(() => "---").join(" | ") + " |";
+        const dataRows = block.rows.map((row) => "| " + row.join(" | ") + " |").join("\n");
+        blockText = [headerRow, separator, dataRows].join("\n");
+        break;
+      case "hr":
+        blockText = "---";
+        break;
+    }
+
+    // Find this block text in the remaining content (after consumed portion)
+    const searchStart = consumedLength;
+    const remaining = fullContent.substring(searchStart);
+    const blockIndex = remaining.indexOf(blockText);
+
+    if (blockIndex !== -1) {
+      consumedLength = searchStart + blockIndex + blockText.length;
+    } else {
+      // Fallback: just use approximate length
+      consumedLength += blockText.length;
+    }
+  }
+
+  // Return everything after the consumed content
+  // Skip leading whitespace/newlines for cleaner display
+  const remaining = fullContent.substring(consumedLength);
+  return remaining.replace(/^[\n\r]+/, "");
+}
+
 interface MessageItemProps {
   message: Message;
   isStreaming?: boolean;
   streamingContent?: string;
+  streamingContentBlocks?: ContentBlockType[];
   toolCalls?: ToolCall[];
   citations?: Citation[];
   responseTimeMs?: number;
@@ -35,6 +104,7 @@ export function MessageItem({
   message,
   isStreaming,
   streamingContent,
+  streamingContentBlocks,
   toolCalls,
   citations,
   responseTimeMs,
@@ -48,10 +118,34 @@ export function MessageItem({
   const displayCitations = citations || message.citations || [];
   const displayResponseTime = responseTimeMs ?? message.response_time_ms;
 
-  // Use content blocks if available (and not streaming), otherwise fall back to markdown
+  // Use content blocks if available from backend, otherwise parse markdown into blocks
   const displayContentBlocks = contentBlocks || message.content_blocks;
-  const useContentBlocks =
-    !isStreaming && displayContentBlocks && displayContentBlocks.length > 0;
+
+  // Calculate content for streaming vs finalized rendering
+  let completedBlocks: ContentBlockType[] = [];
+  let inProgressContent = "";
+
+  if (isStreaming) {
+    // During streaming: use backend content blocks + remaining raw text
+    if (streamingContentBlocks && streamingContentBlocks.length > 0) {
+      completedBlocks = streamingContentBlocks;
+      // Calculate the remaining text that hasn't been parsed into blocks yet
+      inProgressContent = calculateRemainingContent(content, streamingContentBlocks);
+    } else {
+      // No content blocks yet, show raw content as in-progress
+      inProgressContent = content;
+    }
+  } else {
+    // Finalized message: use pre-parsed blocks from backend if available
+    if (displayContentBlocks && displayContentBlocks.length > 0) {
+      completedBlocks = displayContentBlocks;
+    } else if (content) {
+      completedBlocks = parseMarkdownToBlocks(content);
+    }
+  }
+
+  const hasCompletedBlocks = completedBlocks.length > 0;
+  const hasInProgressContent = inProgressContent.trim().length > 0;
 
   return (
     <div
@@ -94,10 +188,17 @@ export function MessageItem({
           </div>
         )}
 
-        {useContentBlocks ? (
-          <ContentBlockRenderer blocks={displayContentBlocks} />
-        ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none prose-pre:bg-transparent prose-pre:p-0">
+        {/* Render completed content blocks with rich formatting */}
+        {hasCompletedBlocks && (
+          <ContentBlockRenderer blocks={completedBlocks} />
+        )}
+
+        {/* Render in-progress content (during streaming) */}
+        {hasInProgressContent && (
+          <div className={cn(
+            "prose prose-sm dark:prose-invert max-w-none prose-pre:bg-transparent prose-pre:p-0",
+            hasCompletedBlocks && "mt-4"
+          )}>
             <ReactMarkdown
               remarkPlugins={[
                 remarkGfm,
@@ -293,7 +394,7 @@ export function MessageItem({
                 },
               }}
             >
-              {content}
+              {inProgressContent}
             </ReactMarkdown>
           </div>
         )}

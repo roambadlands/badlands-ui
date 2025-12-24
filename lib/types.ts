@@ -202,6 +202,14 @@ export interface SSEProgressEvent {
   };
 }
 
+export interface SSEContentBlockEvent {
+  type: "content_block";
+  data: {
+    index: number;
+    block: ContentBlock;
+  };
+}
+
 // Human-readable phase labels
 export const PHASE_LABELS: Record<ProgressPhase, string> = {
   received: "Processing",
@@ -215,6 +223,7 @@ export const PHASE_LABELS: Record<ProgressPhase, string> = {
 
 export type SSEEvent =
   | SSEContentEvent
+  | SSEContentBlockEvent
   | SSEToolCallStartEvent
   | SSEToolCallEndEvent
   | SSECitationEvent

@@ -34,12 +34,14 @@ export default function ChatSessionPage() {
     streamingContent,
     startStreaming,
     appendContent,
+    addContentBlock,
     addToolCallStart,
     updateToolCallEnd,
     addCitation,
     stopStreaming,
     resetStreaming,
     getToolCalls,
+    getContentBlocks,
     streamingCitations,
     setProgress,
   } = useChatStore();
@@ -126,6 +128,7 @@ export default function ChatSessionPage() {
           { content },
           {
             onContent: appendContent,
+            onContentBlock: addContentBlock,
             onToolCallStart: addToolCallStart,
             onToolCallEnd: updateToolCallEnd,
             onCitation: (source, sourceRef, reference) =>
@@ -157,6 +160,7 @@ export default function ChatSessionPage() {
       sessionId,
       startStreaming,
       appendContent,
+      addContentBlock,
       addToolCallStart,
       updateToolCallEnd,
       addCitation,
@@ -181,6 +185,7 @@ export default function ChatSessionPage() {
         sessionId={sessionId}
         isStreaming={isStreaming}
         streamingContent={streamingContent}
+        streamingContentBlocks={getContentBlocks()}
         streamingToolCalls={getToolCalls()}
         streamingCitations={streamingCitations}
       />

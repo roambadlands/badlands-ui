@@ -1,6 +1,7 @@
 import type {
   SSEEvent,
   SSEContentEvent,
+  SSEContentBlockEvent,
   SSEToolCallStartEvent,
   SSEToolCallEndEvent,
   SSECitationEvent,
@@ -10,6 +11,7 @@ import type {
   SSEProgressEvent,
   SendMessageRequest,
   ProgressPhase,
+  ContentBlock,
 } from "./types";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
@@ -49,6 +51,7 @@ async function refreshToken(): Promise<boolean> {
 
 export interface StreamCallbacks {
   onContent?: (text: string) => void;
+  onContentBlock?: (index: number, block: ContentBlock) => void;
   onToolCallStart?: (id: string, tool: string) => void;
   onToolCallEnd?: (
     id: string,
@@ -82,6 +85,8 @@ function parseSSEEvent(eventType: string, data: string): SSEEvent | null {
     switch (eventType) {
       case "content":
         return { type: "content", data: eventData } as SSEContentEvent;
+      case "content_block":
+        return { type: "content_block", data: eventData } as SSEContentBlockEvent;
       case "tool_call_start":
         return { type: "tool_call_start", data: eventData } as SSEToolCallStartEvent;
       case "tool_call_end":
@@ -113,6 +118,9 @@ function handleSSEEvent(event: SSEEvent, callbacks: StreamCallbacks): void {
   switch (event.type) {
     case "content":
       callbacks.onContent?.(event.data.text);
+      break;
+    case "content_block":
+      callbacks.onContentBlock?.(event.data.index, event.data.block);
       break;
     case "tool_call_start":
       callbacks.onToolCallStart?.(event.data.id, event.data.tool);
