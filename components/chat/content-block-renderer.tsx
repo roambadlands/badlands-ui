@@ -3,6 +3,9 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
+import katex from "katex";
+import DOMPurify from "isomorphic-dompurify";
+import { ChevronRight, Info, AlertTriangle, Lightbulb, AlertCircle, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeBlock as CodeBlockComponent } from "./code-block";
 import { MermaidDiagram } from "./mermaid-diagram";
@@ -14,7 +17,15 @@ import type {
   ListBlock,
   BlockquoteBlock,
   TableBlock,
+  MathBlock,
+  TaskListBlock,
+  CalloutBlock,
+  ImageBlock,
+  DetailsBlock,
+  CalloutType,
 } from "@/lib/types";
+
+import "katex/dist/katex.min.css";
 
 interface ContentBlockRendererProps {
   blocks: ContentBlock[];
@@ -54,6 +65,16 @@ function BlockRenderer({ block }: BlockRendererProps) {
       return <TableBlockRenderer block={block} />;
     case "hr":
       return <hr className="my-6 border-border" />;
+    case "math":
+      return <MathBlockRenderer block={block} />;
+    case "tasklist":
+      return <TaskListBlockRenderer block={block} />;
+    case "callout":
+      return <CalloutBlockRenderer block={block} />;
+    case "image":
+      return <ImageBlockRenderer block={block} />;
+    case "details":
+      return <DetailsBlockRenderer block={block} />;
     default:
       return null;
   }
@@ -144,7 +165,7 @@ function HeadingBlockRenderer({ block }: { block: HeadingBlock }) {
 
 /**
  * List blocks render as <ul> or <ol> based on ordered flag.
- * List items may contain inline markdown.
+ * List items may contain inline markdown and preserve newlines.
  */
 function ListBlockRenderer({ block }: { block: ListBlock }) {
   const ListTag = block.ordered ? "ol" : "ul";
@@ -159,7 +180,7 @@ function ListBlockRenderer({ block }: { block: ListBlock }) {
       {block.items.map((item, index) => (
         <li key={index} className="prose prose-sm dark:prose-invert">
           <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkBreaks]}
             components={{
               p: ({ children }) => <>{children}</>,
               code: ({ children }) => (
@@ -285,5 +306,234 @@ function InlineMarkdown({ text }: { text: string }) {
     >
       {text}
     </ReactMarkdown>
+  );
+}
+
+/**
+ * Math block rendered using KaTeX.
+ * Display math is centered and block-level, inline math is inline.
+ * Output is sanitized with DOMPurify for security.
+ */
+function MathBlockRenderer({ block }: { block: MathBlock }) {
+  const html = katex.renderToString(block.math, {
+    throwOnError: false,
+    displayMode: !block.inline,
+    output: "html",
+  });
+
+  // Sanitize KaTeX output - allow only KaTeX-specific elements and classes
+  const sanitizedHtml = DOMPurify.sanitize(html, {
+    ADD_TAGS: ["semantics", "annotation", "mrow", "mi", "mo", "mn", "msup", "msub", "mfrac", "mroot", "msqrt", "mspace", "mtext", "mover", "munder", "munderover", "mtable", "mtr", "mtd", "menclose"],
+    ADD_ATTR: ["encoding", "mathvariant", "stretchy", "fence", "separator", "lspace", "rspace", "accent", "accentunder", "columnalign", "rowalign", "columnspacing", "rowspacing", "notation"],
+  });
+
+  if (block.inline) {
+    return (
+      <span
+        className="inline"
+        dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="my-4 flex justify-center overflow-x-auto"
+      dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+    />
+  );
+}
+
+/**
+ * Task list with checkboxes.
+ */
+function TaskListBlockRenderer({ block }: { block: TaskListBlock }) {
+  return (
+    <ul className="list-none pl-0 space-y-1">
+      {block.tasks.map((task, index) => (
+        <li key={index} className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            checked={task.checked}
+            disabled
+            className="mt-1 h-4 w-4 rounded border-border accent-primary cursor-default"
+          />
+          <span className="prose prose-sm dark:prose-invert">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkBreaks]}
+              components={{
+                p: ({ children }) => <>{children}</>,
+                code: ({ children }) => (
+                  <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                    {children}
+                  </code>
+                ),
+                a: ({ href, children }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline break-all"
+                  >
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {task.text}
+            </ReactMarkdown>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Callout/admonition styling configuration by type.
+ */
+const CALLOUT_CONFIG: Record<CalloutType, {
+  icon: typeof Info;
+  bgClass: string;
+  borderClass: string;
+  iconClass: string;
+  titleClass: string;
+  label: string;
+}> = {
+  NOTE: {
+    icon: Info,
+    bgClass: "bg-blue-500/10",
+    borderClass: "border-blue-500/50",
+    iconClass: "text-blue-500",
+    titleClass: "text-blue-600 dark:text-blue-400",
+    label: "Note",
+  },
+  WARNING: {
+    icon: AlertTriangle,
+    bgClass: "bg-yellow-500/10",
+    borderClass: "border-yellow-500/50",
+    iconClass: "text-yellow-500",
+    titleClass: "text-yellow-600 dark:text-yellow-400",
+    label: "Warning",
+  },
+  TIP: {
+    icon: Lightbulb,
+    bgClass: "bg-green-500/10",
+    borderClass: "border-green-500/50",
+    iconClass: "text-green-500",
+    titleClass: "text-green-600 dark:text-green-400",
+    label: "Tip",
+  },
+  IMPORTANT: {
+    icon: AlertCircle,
+    bgClass: "bg-purple-500/10",
+    borderClass: "border-purple-500/50",
+    iconClass: "text-purple-500",
+    titleClass: "text-purple-600 dark:text-purple-400",
+    label: "Important",
+  },
+  CAUTION: {
+    icon: ShieldAlert,
+    bgClass: "bg-red-500/10",
+    borderClass: "border-red-500/50",
+    iconClass: "text-red-500",
+    titleClass: "text-red-600 dark:text-red-400",
+    label: "Caution",
+  },
+};
+
+/**
+ * Callout/admonition block with styled alert box.
+ */
+function CalloutBlockRenderer({ block }: { block: CalloutBlock }) {
+  const config = CALLOUT_CONFIG[block.callout_type] || CALLOUT_CONFIG.NOTE;
+  const Icon = config.icon;
+
+  return (
+    <div
+      className={cn(
+        "my-4 rounded-lg border-l-4 p-4",
+        config.bgClass,
+        config.borderClass
+      )}
+    >
+      <div className={cn("flex items-center gap-2 font-semibold mb-2", config.titleClass)}>
+        <Icon className={cn("h-5 w-5", config.iconClass)} />
+        <span>{config.label}</span>
+      </div>
+      <div className="prose prose-sm dark:prose-invert max-w-none">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkBreaks]}
+          components={{
+            p: ({ children }) => <span className="block">{children}</span>,
+            code: ({ children }) => (
+              <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                {children}
+              </code>
+            ),
+            a: ({ href, children }) => (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline break-all"
+              >
+                {children}
+              </a>
+            ),
+          }}
+        >
+          {block.text}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Image block with lazy loading and error handling.
+ */
+function ImageBlockRenderer({ block }: { block: ImageBlock }) {
+  return (
+    <figure className="my-4">
+      <img
+        src={block.image_url}
+        alt={block.image_alt || ""}
+        loading="lazy"
+        className="max-w-full h-auto rounded-lg border border-border"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = "none";
+          target.insertAdjacentHTML(
+            "afterend",
+            `<span class="text-muted-foreground text-sm italic">Image failed to load</span>`
+          );
+        }}
+      />
+      {block.image_alt && (
+        <figcaption className="text-center text-sm text-muted-foreground mt-2">
+          {block.image_alt}
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/**
+ * Details/collapsible block with nested children.
+ */
+function DetailsBlockRenderer({ block }: { block: DetailsBlock }) {
+  return (
+    <details className="my-4 rounded-lg border border-border bg-muted/30 group">
+      <summary className="cursor-pointer px-4 py-2 font-medium hover:bg-muted/50 rounded-t-lg list-none flex items-center gap-2">
+        <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
+        {block.text}
+      </summary>
+      {block.children && block.children.length > 0 && (
+        <div className="px-4 pb-4 pt-2">
+          <ContentBlockRenderer blocks={block.children} />
+        </div>
+      )}
+    </details>
   );
 }

@@ -45,7 +45,12 @@ export type ContentBlock =
   | ListBlock
   | BlockquoteBlock
   | TableBlock
-  | HrBlock;
+  | HrBlock
+  | MathBlock
+  | TaskListBlock
+  | CalloutBlock
+  | ImageBlock
+  | DetailsBlock;
 
 export interface TextBlock {
   type: "text";
@@ -83,6 +88,42 @@ export interface TableBlock {
 
 export interface HrBlock {
   type: "hr";
+}
+
+export interface MathBlock {
+  type: "math";
+  math: string;
+  inline?: boolean;
+}
+
+export interface TaskItem {
+  text: string;
+  checked: boolean;
+}
+
+export interface TaskListBlock {
+  type: "tasklist";
+  tasks: TaskItem[];
+}
+
+export type CalloutType = "NOTE" | "WARNING" | "TIP" | "IMPORTANT" | "CAUTION";
+
+export interface CalloutBlock {
+  type: "callout";
+  callout_type: CalloutType;
+  text: string;
+}
+
+export interface ImageBlock {
+  type: "image";
+  image_url: string;
+  image_alt?: string;
+}
+
+export interface DetailsBlock {
+  type: "details";
+  text: string;
+  children?: ContentBlock[];
 }
 
 // Message types

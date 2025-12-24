@@ -68,6 +68,26 @@ function calculateRemainingContent(fullContent: string, blocks: ContentBlockType
       case "hr":
         blockText = "---";
         break;
+      case "math":
+        // Math blocks use $...$ for inline or $$...$$ for display
+        blockText = block.inline ? `$${block.math}$` : `$$${block.math}$$`;
+        break;
+      case "tasklist":
+        blockText = block.tasks
+          .map((task) => `- [${task.checked ? "x" : " "}] ${task.text}`)
+          .join("\n");
+        break;
+      case "callout":
+        // GitHub-style callout: > [!TYPE]
+        blockText = `> [!${block.callout_type}]\n> ${block.text}`;
+        break;
+      case "image":
+        blockText = `![${block.image_alt || ""}](${block.image_url})`;
+        break;
+      case "details":
+        // HTML details tag
+        blockText = `<details>\n<summary>${block.text}</summary>\n</details>`;
+        break;
     }
 
     // Find this block text in the remaining content (after consumed portion)
