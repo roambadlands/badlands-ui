@@ -85,13 +85,20 @@ function BlockRenderer({ block }: BlockRendererProps) {
  * We use react-markdown with minimal plugins to render these.
  */
 function TextBlockRenderer({ block }: { block: TextBlock }) {
+  // Check if text has multiple paragraphs (needs block display)
+  const hasMultipleParagraphs = block.text.includes("\n\n");
+
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
-          // Prevent wrapping in <p> for cleaner inline rendering
-          p: ({ children }) => <span className="block">{children}</span>,
+          // Use inline display for single paragraphs to avoid trailing newline on copy
+          p: ({ children }) => (
+            <span className={hasMultipleParagraphs ? "block" : "inline"}>
+              {children}
+            </span>
+          ),
           code: ({ children }) => (
             <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
               {children}
