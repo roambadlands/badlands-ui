@@ -9,8 +9,19 @@ interface ToolCallDisplayProps {
   toolCall: ToolCall;
 }
 
+function formatToolName(tool: string): string {
+  // Remove "mcp__" or "mcp:" prefixes
+  let formatted = tool.replace(/^mcp[_:]+/, "");
+  // Replace double underscores with " - " for readability
+  formatted = formatted.replace(/__/g, " - ");
+  // Replace single underscores with spaces
+  formatted = formatted.replace(/_/g, " ");
+  return formatted;
+}
+
 export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const displayName = formatToolName(toolCall.tool);
 
   const statusIcon = {
     pending: <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />,
@@ -30,7 +41,7 @@ export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         )}
         <Wrench className="h-4 w-4 text-muted-foreground" />
-        <span className="font-medium">{toolCall.tool}</span>
+        <span className="font-medium">{displayName}</span>
         <span className="ml-auto">{statusIcon[toolCall.status]}</span>
       </button>
 

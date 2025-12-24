@@ -7,17 +7,36 @@ interface CitationDisplayProps {
   citation: Citation;
 }
 
+function formatSource(source: string): string {
+  // Hide "mcp" as a source, use "Tool" instead
+  if (source === "mcp") return "Tool";
+  return source;
+}
+
+function formatSourceRef(sourceRef: string): string {
+  // Remove "mcp:" prefix and format tool names nicely
+  let formatted = sourceRef.replace(/^mcp:/, "");
+  // Replace double underscores with " - " for readability
+  formatted = formatted.replace(/__/g, " - ");
+  // Replace single underscores with spaces
+  formatted = formatted.replace(/_/g, " ");
+  return formatted;
+}
+
 export function CitationDisplay({ citation }: CitationDisplayProps) {
+  const displaySource = formatSource(citation.source);
+  const displaySourceRef = citation.source_ref ? formatSourceRef(citation.source_ref) : null;
+
   return (
     <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
       <ExternalLink className="h-3 w-3 mt-0.5 shrink-0" />
       <div className="min-w-0">
         <div className="font-medium text-foreground truncate">
-          {citation.source}
+          {displaySource}
         </div>
-        {citation.source_ref && (
+        {displaySourceRef && (
           <div className="text-muted-foreground truncate">
-            {citation.source_ref}
+            {displaySourceRef}
           </div>
         )}
         {citation.reference && (

@@ -31,12 +31,14 @@ export function MessageList({
   }, [messages, streamingContent]);
 
   // Create a streaming message placeholder
+  // Show when streaming AND (has content OR has tool calls)
+  const hasToolCalls = streamingToolCalls && streamingToolCalls.length > 0;
   const streamingMessage: Message | null =
-    isStreaming && streamingContent
+    isStreaming && (streamingContent || hasToolCalls)
       ? {
           id: "streaming",
           role: "assistant",
-          content: streamingContent,
+          content: streamingContent || "",
           created_at: new Date().toISOString(),
         }
       : null;
