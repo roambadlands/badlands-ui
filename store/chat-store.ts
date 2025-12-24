@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ToolCall, Citation } from "@/lib/types";
+import type { ToolCall, Citation, ProgressPhase } from "@/lib/types";
 
 interface ChatStore {
   // Streaming state
@@ -8,6 +8,10 @@ interface ChatStore {
   streamingToolCalls: Map<string, ToolCall>;
   streamingCitations: Citation[];
   abortController: AbortController | null;
+
+  // Progress state
+  currentPhase: ProgressPhase | null;
+  phaseStartedAt: number | null;
 
   // Actions
   startStreaming: () => AbortController;
@@ -23,6 +27,9 @@ interface ChatStore {
   stopStreaming: () => void;
   resetStreaming: () => void;
 
+  // Progress actions
+  setProgress: (phase: ProgressPhase, startedAt: number) => void;
+
   // Getters for tool calls as array
   getToolCalls: () => ToolCall[];
 }
@@ -33,6 +40,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   streamingToolCalls: new Map(),
   streamingCitations: [],
   abortController: null,
+  currentPhase: null,
+  phaseStartedAt: null,
 
   startStreaming: () => {
     const controller = new AbortController();
@@ -42,6 +51,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       streamingToolCalls: new Map(),
       streamingCitations: [],
       abortController: controller,
+      currentPhase: null,
+      phaseStartedAt: null,
     });
     return controller;
   },
@@ -104,6 +115,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       streamingToolCalls: new Map(),
       streamingCitations: [],
       abortController: null,
+      currentPhase: null,
+      phaseStartedAt: null,
+    });
+  },
+
+  setProgress: (phase, startedAt) => {
+    console.log("[ChatStore] setProgress:", phase, startedAt);
+    set({
+      currentPhase: phase,
+      phaseStartedAt: startedAt,
     });
   },
 

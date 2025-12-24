@@ -39,6 +39,9 @@ export default function ChatSessionPage() {
     resetStreaming,
     getToolCalls,
     streamingCitations,
+    currentPhase,
+    phaseStartedAt,
+    setProgress,
   } = useChatStore();
 
   // API queries
@@ -127,6 +130,7 @@ export default function ChatSessionPage() {
             onToolCallEnd: updateToolCallEnd,
             onCitation: (source, sourceRef, reference) =>
               addCitation({ source, source_ref: sourceRef, reference }),
+            onProgress: setProgress,
             onDone: () => {
               resetStreaming();
               queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
@@ -156,6 +160,7 @@ export default function ChatSessionPage() {
       addToolCallStart,
       updateToolCallEnd,
       addCitation,
+      setProgress,
       resetStreaming,
       queryClient,
       sessionData,
@@ -177,6 +182,8 @@ export default function ChatSessionPage() {
         streamingContent={streamingContent}
         streamingToolCalls={getToolCalls()}
         streamingCitations={streamingCitations}
+        currentPhase={currentPhase}
+        phaseStartedAt={phaseStartedAt}
       />
       <ChatInput
         onSend={handleSendMessage}

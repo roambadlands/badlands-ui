@@ -10,7 +10,8 @@ import { sanitizeOptions } from "@/lib/markdown";
 import { CodeBlock } from "./code-block";
 import { ToolCallDisplay } from "./tool-call";
 import { CitationDisplay } from "./citation";
-import type { Message, ToolCall, Citation } from "@/lib/types";
+import { ProgressIndicator } from "./progress-indicator";
+import type { Message, ToolCall, Citation, ProgressPhase } from "@/lib/types";
 
 import "highlight.js/styles/github-dark.css";
 
@@ -20,6 +21,8 @@ interface MessageItemProps {
   streamingContent?: string;
   toolCalls?: ToolCall[];
   citations?: Citation[];
+  currentPhase?: ProgressPhase | null;
+  phaseStartedAt?: number | null;
 }
 
 export function MessageItem({
@@ -28,6 +31,8 @@ export function MessageItem({
   streamingContent,
   toolCalls,
   citations,
+  currentPhase,
+  phaseStartedAt,
 }: MessageItemProps) {
   const isUser = message.role === "user";
   const content = isStreaming ? streamingContent : message.content;
@@ -63,6 +68,14 @@ export function MessageItem({
           <div className="mb-4 space-y-2">
             {displayToolCalls.map((toolCall) => (
               <ToolCallDisplay key={toolCall.id} toolCall={toolCall} />
+            ))}
+          </div>
+        )}
+
+        {displayCitations.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {displayCitations.map((citation, index) => (
+              <CitationDisplay key={index} citation={citation} />
             ))}
           </div>
         )}
@@ -122,11 +135,9 @@ export function MessageItem({
           )}
         </div>
 
-        {displayCitations.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {displayCitations.map((citation, index) => (
-              <CitationDisplay key={index} citation={citation} />
-            ))}
+        {isStreaming && currentPhase && phaseStartedAt && (
+          <div className="mt-2">
+            <ProgressIndicator phase={currentPhase} startedAt={phaseStartedAt} />
           </div>
         )}
       </div>

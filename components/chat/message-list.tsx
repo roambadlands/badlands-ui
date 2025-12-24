@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import { Bot } from "lucide-react";
 import { MessageItem } from "./message-item";
-import type { Message, ToolCall, Citation } from "@/lib/types";
+import { ProgressIndicator } from "./progress-indicator";
+import type { Message, ToolCall, Citation, ProgressPhase } from "@/lib/types";
 
 interface MessageListProps {
   messages: Message[];
@@ -11,6 +12,8 @@ interface MessageListProps {
   streamingContent?: string;
   streamingToolCalls?: ToolCall[];
   streamingCitations?: Citation[];
+  currentPhase?: ProgressPhase | null;
+  phaseStartedAt?: number | null;
 }
 
 export function MessageList({
@@ -19,6 +22,8 @@ export function MessageList({
   streamingContent,
   streamingToolCalls,
   streamingCitations,
+  currentPhase,
+  phaseStartedAt,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -28,7 +33,7 @@ export function MessageList({
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, streamingContent]);
+  }, [messages, streamingContent, streamingToolCalls, streamingCitations]);
 
   // Create a streaming message placeholder
   // Show when streaming AND (has content OR has tool calls)
@@ -50,7 +55,7 @@ export function MessageList({
           <MessageItem key={message.id} message={message} />
         ))}
 
-        {/* Show thinking indicator when streaming but no content yet */}
+        {/* Show progress indicator when streaming but no content yet */}
         {isStreaming && !streamingContent && streamingToolCalls?.length === 0 && (
           <div className="flex gap-4 p-4 bg-muted/50">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
@@ -58,11 +63,15 @@ export function MessageList({
             </div>
             <div className="flex-1">
               <div className="font-medium text-sm mb-1">Assistant</div>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" />
-              </div>
+              {currentPhase && phaseStartedAt ? (
+                <ProgressIndicator phase={currentPhase} startedAt={phaseStartedAt} />
+              ) : (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -74,6 +83,8 @@ export function MessageList({
             streamingContent={streamingContent}
             toolCalls={streamingToolCalls}
             citations={streamingCitations}
+            currentPhase={currentPhase}
+            phaseStartedAt={phaseStartedAt}
           />
         )}
 

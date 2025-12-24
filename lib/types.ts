@@ -131,6 +131,31 @@ export interface SSEErrorEvent {
   data: { code: string; message: string };
 }
 
+// Progress phases
+export type ProgressPhase =
+  | "received"
+  | "loading_context"
+  | "loading_tools"
+  | "thinking"
+  | "responding";
+
+export interface SSEProgressEvent {
+  type: "progress";
+  data: {
+    phase: ProgressPhase;
+    started_at: number; // Unix timestamp in milliseconds
+  };
+}
+
+// Human-readable phase labels
+export const PHASE_LABELS: Record<ProgressPhase, string> = {
+  received: "Processing",
+  loading_context: "Loading context",
+  loading_tools: "Loading tools",
+  thinking: "Thinking",
+  responding: "Responding",
+};
+
 export type SSEEvent =
   | SSEContentEvent
   | SSEToolCallStartEvent
@@ -138,7 +163,8 @@ export type SSEEvent =
   | SSECitationEvent
   | SSEUsageEvent
   | SSEDoneEvent
-  | SSEErrorEvent;
+  | SSEErrorEvent
+  | SSEProgressEvent;
 
 // Request types
 export interface CreateSessionRequest {

@@ -7,7 +7,9 @@ import type {
   SSEUsageEvent,
   SSEDoneEvent,
   SSEErrorEvent,
+  SSEProgressEvent,
   SendMessageRequest,
+  ProgressPhase,
 } from "./types";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
@@ -63,6 +65,7 @@ export interface StreamCallbacks {
   ) => void;
   onDone?: (messageId: string) => void;
   onError?: (code: string, message: string) => void;
+  onProgress?: (phase: ProgressPhase, startedAt: number) => void;
 }
 
 /**
@@ -91,6 +94,8 @@ function parseSSEEvent(eventType: string, data: string): SSEEvent | null {
         return { type: "done", data: eventData } as SSEDoneEvent;
       case "error":
         return { type: "error", data: eventData } as SSEErrorEvent;
+      case "progress":
+        return { type: "progress", data: eventData } as SSEProgressEvent;
       default:
         console.warn(`Unknown SSE event type: ${eventType}`);
         return null;
@@ -140,6 +145,10 @@ function handleSSEEvent(event: SSEEvent, callbacks: StreamCallbacks): void {
       break;
     case "error":
       callbacks.onError?.(event.data.code, event.data.message);
+      break;
+    case "progress":
+      console.log("[SSE] Progress event:", event.data.phase, event.data.started_at);
+      callbacks.onProgress?.(event.data.phase, event.data.started_at);
       break;
   }
 }
