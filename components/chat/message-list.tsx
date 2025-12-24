@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Bot } from "lucide-react";
 import { MessageItem } from "./message-item";
+import { EmptyState } from "./empty-state";
 import type { Message, ToolCall, Citation, ContentBlock } from "@/lib/types";
 
 // Store scroll positions outside component to persist across remounts
@@ -19,6 +20,7 @@ interface MessageListProps {
   streamingContentBlocks?: ContentBlock[];
   streamingToolCalls?: ToolCall[];
   streamingCitations?: Citation[];
+  onSelectPrompt?: (prompt: string) => void;
 }
 
 export function MessageList({
@@ -29,6 +31,7 @@ export function MessageList({
   streamingContentBlocks,
   streamingToolCalls,
   streamingCitations,
+  onSelectPrompt,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -150,7 +153,11 @@ export function MessageList({
           />
         )}
 
-        {messages.length === 0 && !isStreaming && (
+        {messages.length === 0 && !isStreaming && onSelectPrompt && (
+          <EmptyState onSelectPrompt={onSelectPrompt} />
+        )}
+
+        {messages.length === 0 && !isStreaming && !onSelectPrompt && (
           <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
             Start a conversation by sending a message
           </div>

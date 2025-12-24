@@ -188,6 +188,7 @@ export default function ChatSessionPage() {
         streamingContentBlocks={getContentBlocks()}
         streamingToolCalls={getToolCalls()}
         streamingCitations={streamingCitations}
+        onSelectPrompt={handleSendMessage}
       />
       <GlobalProgressIndicator />
       <ChatInput

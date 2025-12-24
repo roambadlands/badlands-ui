@@ -12,6 +12,7 @@ import { useSessions, useSession, useCreateSession, useDeleteSession } from "@/l
 import { useSessionStore } from "@/store/session-store";
 import { useChatStore } from "@/store/chat-store";
 import { streamMessage } from "@/lib/streaming";
+import { parseMarkdownToBlocks } from "@/lib/markdown-parser";
 import type { Message } from "@/lib/types";
 
 export default function ChatPage() {
@@ -105,6 +106,13 @@ export default function ChatPage() {
                 onCitation: (source, sourceRef, reference) =>
                   addCitation({ source, source_ref: sourceRef, reference }),
                 onDone: () => {
+                  // Log the complete message before resetting
+                  const state = useChatStore.getState();
+                  const rawText = state.streamingContent;
+                  const contentBlocks = parseMarkdownToBlocks(rawText);
+                  console.log("[Assistant Message Complete] Raw text:", rawText);
+                  console.log("[Assistant Message Complete] Content blocks:", contentBlocks);
+
                   resetStreaming();
                   queryClient.invalidateQueries({ queryKey: ["session", newSession.id] });
                   // Delay sessions invalidation to allow backend title generation to complete
@@ -163,6 +171,13 @@ export default function ChatPage() {
             onCitation: (source, sourceRef, reference) =>
               addCitation({ source, source_ref: sourceRef, reference }),
             onDone: () => {
+              // Log the complete message before resetting
+              const state = useChatStore.getState();
+              const rawText = state.streamingContent;
+              const contentBlocks = parseMarkdownToBlocks(rawText);
+              console.log("[Assistant Message Complete] Raw text:", rawText);
+              console.log("[Assistant Message Complete] Content blocks:", contentBlocks);
+
               resetStreaming();
               queryClient.invalidateQueries({ queryKey: ["session", activeSessionId] });
               // Delay sessions invalidation to allow backend title generation to complete
@@ -215,6 +230,7 @@ export default function ChatPage() {
         streamingContent={streamingContent}
         streamingToolCalls={getToolCalls()}
         streamingCitations={streamingCitations}
+        onSelectPrompt={handleSendMessage}
       />
       <GlobalProgressIndicator />
       <ChatInput
