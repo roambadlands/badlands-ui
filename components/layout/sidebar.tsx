@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { Plus, MessageSquare, Trash2, MoreHorizontal, Pencil, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -157,7 +156,7 @@ export function Sidebar({
   return (
     <>
       <div
-        className="border-r border-border flex flex-col h-full bg-sidebar flex-shrink-0"
+        className="border-r border-border flex flex-col h-full bg-sidebar flex-shrink-0 overflow-hidden"
         style={{ width: width ? `${width}px` : "256px" }}
       >
         <div className="p-4">
@@ -167,7 +166,7 @@ export function Sidebar({
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-2 overflow-hidden">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
           {isLoading ? (
             <div className="space-y-2 p-2">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -179,80 +178,75 @@ export function Sidebar({
               No conversations yet
             </div>
           ) : (
-            <div className="space-y-1 p-2">
+            <div className="py-2 px-2">
               {sessions.map((session) => (
                 <div
                   key={session.id}
                   className={cn(
-                    "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent cursor-pointer",
+                    "group relative rounded-lg text-sm transition-colors hover:bg-sidebar-accent cursor-pointer mb-1",
                     activeSessionId === session.id &&
                       "bg-sidebar-accent text-sidebar-accent-foreground"
                   )}
                   onClick={() => onSelectSession(session.id)}
                 >
-                  <MessageSquare className="h-4 w-4 shrink-0" />
-                  <div className="flex-1 overflow-hidden pr-8">
-                    <div className="truncate">
-                      {session.title || "New Chat"}
-                    </div>
-                    <div
-                      className="text-xs text-muted-foreground truncate"
-                      title={formatFullDateTime(session.created_at)}
-                    >
-                      {formatDate(session.created_at)}
-                    </div>
-                  </div>
-                  {/* Button container pinned to right with gradient fade */}
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
-                    <div className={cn(
-                      "w-6 h-full bg-gradient-to-r from-transparent to-sidebar",
-                      "group-hover:to-sidebar-accent",
-                      activeSessionId === session.id && "to-sidebar-accent"
-                    )} />
-                    <div className={cn(
-                      "bg-sidebar pr-1",
-                      "group-hover:bg-sidebar-accent",
-                      activeSessionId === session.id && "bg-sidebar-accent"
-                    )}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRenameClick(session);
-                            }}
-                          >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(session.id);
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  {/* Content area */}
+                  <div className="flex items-center gap-2 py-2 pl-3 pr-8 overflow-hidden">
+                    <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                    <div className="overflow-hidden min-w-0">
+                      <div className="truncate text-sm">
+                        {session.title || "New Chat"}
+                      </div>
+                      <div
+                        className="text-xs text-muted-foreground truncate"
+                        title={formatFullDateTime(session.created_at)}
+                      >
+                        {formatDate(session.created_at)}
+                      </div>
                     </div>
                   </div>
+                  {/* Menu button - overlaps content, always at right edge */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "absolute right-0 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground",
+                          "bg-sidebar hover:bg-accent",
+                          "group-hover:bg-sidebar-accent group-hover:hover:bg-accent",
+                          activeSessionId === session.id && "bg-sidebar-accent"
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRenameClick(session);
+                        }}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(session.id);
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </div>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

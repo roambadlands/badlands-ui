@@ -5,7 +5,7 @@ import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 import type { Session } from "@/lib/types";
 
-const MIN_SIDEBAR_WIDTH = 180;
+const MIN_SIDEBAR_WIDTH = 120;
 const MAX_SIDEBAR_WIDTH = 480;
 const DEFAULT_SIDEBAR_WIDTH = 256;
 const STORAGE_KEY = "sidebar-width";
