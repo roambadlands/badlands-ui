@@ -14,12 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build arguments for environment variables needed at build time
-ARG NEXT_PUBLIC_BACKEND_URL
-ARG NEXT_PUBLIC_APP_URL
-
-ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+# No build-time env vars needed - they are injected at runtime
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

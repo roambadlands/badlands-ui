@@ -13,8 +13,7 @@ import type {
   ProgressPhase,
   ContentBlock,
 } from "./types";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+import { env } from "./env";
 
 function getCsrfToken(): string {
   // Read CSRF token from cookie (double-submit pattern)
@@ -28,7 +27,7 @@ function getCsrfToken(): string {
 
 async function refreshToken(): Promise<boolean> {
   try {
-    const response = await fetch(`${BACKEND_URL}/v1/auth/refresh`, {
+    const response = await fetch(`${env.BACKEND_URL}/v1/auth/refresh`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -170,7 +169,7 @@ export async function streamMessage(
   callbacks: StreamCallbacks,
   signal?: AbortSignal
 ): Promise<void> {
-  const url = `${BACKEND_URL}/v1/sessions/${sessionId}/messages`;
+  const url = `${env.BACKEND_URL}/v1/sessions/${sessionId}/messages`;
 
   const makeRequest = () =>
     fetch(url, {

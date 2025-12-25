@@ -7,8 +7,7 @@ import type {
   CreateSessionRequest,
   APIError,
 } from "./types";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+import { env } from "./env";
 
 class APIClient {
   private baseUrl: string;
@@ -190,8 +189,27 @@ class APIClient {
   }
 }
 
-// Export singleton instance
-export const api = new APIClient(BACKEND_URL);
+// Export singleton instance with lazy initialization
+// Uses getter to ensure env.BACKEND_URL is read at runtime, not module load time
+let _api: APIClient | null = null;
+
+function getApi(): APIClient {
+  if (!_api) {
+    _api = new APIClient(env.BACKEND_URL);
+  }
+  return _api;
+}
+
+export const api = new Proxy({} as APIClient, {
+  get(_, prop: string | symbol) {
+    const instance = getApi();
+    const value = instance[prop as keyof APIClient];
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
+  },
+});
 
 // Export class for testing
 export { APIClient };
