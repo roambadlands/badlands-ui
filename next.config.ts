@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 function getSecurityHeaders() {
-  // Read at request time, not build time
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  // Use non-prefixed env var to read at runtime (NEXT_PUBLIC_* is inlined at build time)
+  const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
   return [
     {
