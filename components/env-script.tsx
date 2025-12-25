@@ -11,8 +11,8 @@
  */
 export function EnvScript() {
   const envVars = {
-    NEXT_PUBLIC_BACKEND_URL: process.env.BACKEND_URL || "",
-    NEXT_PUBLIC_APP_URL: process.env.APP_URL || "",
+    NEXT_PUBLIC_BACKEND_URL: process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "",
+    NEXT_PUBLIC_APP_URL: process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "",
   };
 
   return (

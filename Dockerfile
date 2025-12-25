@@ -14,8 +14,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# No build-time env vars needed - they are injected at runtime
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_BACKEND_URL=https://api.roambadlands.com
+ENV NEXT_PUBLIC_APP_URL=https://demo.roambadlands.com
 
 RUN npm run build
 
