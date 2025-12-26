@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { loginWithOAuth, type OAuthProvider } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,14 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          By continuing, you agree to our Terms of Service and Privacy Policy
+          By continuing, you agree to our{" "}
+          <Link href="/terms" className="underline hover:text-foreground transition-colors">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
         </p>
       </div>
     </div>
