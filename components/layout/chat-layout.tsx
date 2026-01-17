@@ -3,6 +3,7 @@
 import { type ReactNode, useState, useCallback, useEffect, useRef } from "react";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
+import { Footer } from "./footer";
 import type { Session } from "@/lib/types";
 
 const MIN_SIDEBAR_WIDTH = 120;
@@ -118,6 +119,7 @@ export function ChatLayout({
         </div>
         <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -335,3 +335,11 @@ export interface APIError {
   error: string;
   code?: string;
 }
+
+// Status types (backend info)
+export interface StatusResponse {
+  dev_mode: boolean;
+  version: string;
+  commit: string;
+  build_date: string;
+}

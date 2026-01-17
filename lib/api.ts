@@ -6,6 +6,7 @@ import type {
   BudgetResponse,
   CreateSessionRequest,
   APIError,
+  StatusResponse,
 } from "./types";
 import { env } from "./env";
 import { addApiBreadcrumb, captureError } from "./sentry";
@@ -212,6 +213,11 @@ class APIClient {
   // Streaming endpoint - returns the URL for direct fetch
   getStreamUrl(sessionId: string): string {
     return `${this.baseUrl}/v1/sessions/${sessionId}/messages`;
+  }
+
+  // Status endpoint (no auth required)
+  async getStatus(): Promise<StatusResponse> {
+    return this.fetch<StatusResponse>("/status");
   }
 }
 

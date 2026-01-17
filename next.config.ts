@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import packageJson from "./package.json";
 
 function getSecurityHeaders() {
   // Use non-prefixed env var to read at runtime (NEXT_PUBLIC_* is inlined at build time)
@@ -56,6 +57,9 @@ function getSecurityHeaders() {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  env: {
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
+  },
   async headers() {
     return [
       {
