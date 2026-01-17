@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import type {
   SSEEvent,
   SSEContentEvent,
@@ -14,6 +15,7 @@ import type {
   ContentBlock,
 } from "./types";
 import { env } from "./env";
+import { addStreamingBreadcrumb, captureError } from "./sentry";
 
 function getCsrfToken(): string {
   // Read CSRF token from cookie (double-submit pattern)
@@ -171,95 +173,122 @@ export async function streamMessage(
 ): Promise<void> {
   const url = `${env.BACKEND_URL}/v1/sessions/${sessionId}/messages`;
 
-  const makeRequest = () =>
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        "X-CSRF-Token": getCsrfToken(),
-      },
-      body: JSON.stringify(request),
-      credentials: "include",
-      signal,
-    });
+  return Sentry.startSpan(
+    {
+      name: "chat.stream_message",
+      op: "streaming",
+      attributes: { sessionId },
+    },
+    async () => {
+      addStreamingBreadcrumb("start", sessionId);
 
-  let response = await makeRequest();
+      const makeRequest = () =>
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+            "X-CSRF-Token": getCsrfToken(),
+          },
+          body: JSON.stringify(request),
+          credentials: "include",
+          signal,
+        });
 
-  // Handle 401 by attempting token refresh
-  if (response.status === 401) {
-    const refreshed = await refreshToken();
-    if (refreshed) {
-      response = await makeRequest();
-    } else {
-      // Redirect to login if refresh failed
-      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
-      }
-      throw new Error("Session expired");
-    }
-  }
+      let response = await makeRequest();
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = `Request failed with status ${response.status}`;
-    try {
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.error || errorMessage;
-    } catch {
-      // Use default error message
-    }
-    throw new Error(errorMessage);
-  }
-
-  if (!response.body) {
-    throw new Error("Response body is null");
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let currentEventType = "";
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        break;
-      }
-
-      buffer += decoder.decode(value, { stream: true });
-
-      // Process complete lines
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-
-        if (!trimmedLine) {
-          // Empty line indicates end of event
-          currentEventType = "";
-          continue;
+      // Handle 401 by attempting token refresh
+      if (response.status === 401) {
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          response = await makeRequest();
+        } else {
+          // Redirect to login if refresh failed
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.startsWith("/login")
+          ) {
+            window.location.href = "/login";
+          }
+          throw new Error("Session expired");
         }
+      }
 
-        if (trimmedLine.startsWith("event:")) {
-          currentEventType = trimmedLine.slice(6).trim();
-        } else if (trimmedLine.startsWith("data:")) {
-          const data = trimmedLine.slice(5).trim();
-          if (currentEventType && data) {
-            const event = parseSSEEvent(currentEventType, data);
-            if (event) {
-              handleSSEEvent(event, callbacks);
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `Request failed with status ${response.status}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          // Use default error message
+        }
+        addStreamingBreadcrumb("error", sessionId, errorMessage);
+        captureError(new Error(errorMessage), {
+          sessionId,
+          status: response.status,
+        });
+        throw new Error(errorMessage);
+      }
+
+      if (!response.body) {
+        throw new Error("Response body is null");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let currentEventType = "";
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            addStreamingBreadcrumb("complete", sessionId);
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete lines
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+
+            if (!trimmedLine) {
+              // Empty line indicates end of event
+              currentEventType = "";
+              continue;
+            }
+
+            if (trimmedLine.startsWith("event:")) {
+              currentEventType = trimmedLine.slice(6).trim();
+            } else if (trimmedLine.startsWith("data:")) {
+              const data = trimmedLine.slice(5).trim();
+              if (currentEventType && data) {
+                const event = parseSSEEvent(currentEventType, data);
+                if (event) {
+                  handleSSEEvent(event, callbacks);
+                }
+              }
             }
           }
         }
+      } catch (error) {
+        // Don't capture abort errors (user cancelled)
+        if ((error as Error).name !== "AbortError") {
+          addStreamingBreadcrumb("error", sessionId, (error as Error).message);
+          captureError(error as Error, { sessionId });
+        }
+        throw error;
+      } finally {
+        reader.releaseLock();
       }
     }
-  } finally {
-    reader.releaseLock();
-  }
+  );
 }
 
 /**

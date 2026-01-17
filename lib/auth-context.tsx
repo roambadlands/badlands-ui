@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { api } from "./api";
+import { setSentryUser } from "./sentry";
 import type { AuthMeResponse } from "./types";
 
 interface AuthContextType {
@@ -32,8 +33,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const userData = await api.getMe();
       setUser(userData);
+      setSentryUser(userData.tenant_id);
     } catch {
       setUser(null);
+      setSentryUser(null);
     }
   }, []);
 
@@ -42,8 +45,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const userData = await api.getMe();
         setUser(userData);
+        setSentryUser(userData.tenant_id);
       } catch {
         setUser(null);
+        setSentryUser(null);
       } finally {
         setIsLoading(false);
       }

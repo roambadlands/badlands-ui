@@ -8,6 +8,7 @@ import type {
   APIError,
 } from "./types";
 import { env } from "./env";
+import { addApiBreadcrumb, captureError } from "./sentry";
 
 class APIClient {
   private baseUrl: string;
@@ -34,59 +35,84 @@ class APIClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const csrfToken = this.getCsrfToken();
+    const method = options.method || "GET";
 
-    const response = await fetch(url, {
-      ...options,
-      credentials: "include", // Include cookies for auth
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken,
-        ...options.headers,
-      },
-    });
+    try {
+      const response = await fetch(url, {
+        ...options,
+        credentials: "include", // Include cookies for auth
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          ...options.headers,
+        },
+      });
 
-    if (response.status === 401) {
-      // Try to refresh the token
-      const refreshed = await this.refreshToken();
-      if (refreshed) {
-        // Retry the original request
-        const retryResponse = await fetch(url, {
-          ...options,
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": this.getCsrfToken(),
-            ...options.headers,
-          },
-        });
+      // Add breadcrumb for the request
+      addApiBreadcrumb(method, endpoint, response.status);
 
-        if (!retryResponse.ok) {
-          const error = (await retryResponse.json()) as APIError;
-          throw new Error(error.error || "Request failed after token refresh");
+      if (response.status === 401) {
+        // Try to refresh the token
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          // Retry the original request
+          const retryResponse = await fetch(url, {
+            ...options,
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": this.getCsrfToken(),
+              ...options.headers,
+            },
+          });
+
+          addApiBreadcrumb(method, endpoint, retryResponse.status);
+
+          if (!retryResponse.ok) {
+            const error = (await retryResponse.json()) as APIError;
+            const errorMsg = error.error || "Request failed after token refresh";
+            addApiBreadcrumb(method, endpoint, retryResponse.status, errorMsg);
+            throw new Error(errorMsg);
+          }
+
+          return retryResponse.json() as Promise<T>;
+        } else {
+          // Redirect to login if refresh failed (but not if already on login)
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.startsWith("/login")
+          ) {
+            window.location.href = "/login";
+          }
+          throw new Error("Session expired");
         }
-
-        return retryResponse.json() as Promise<T>;
-      } else {
-        // Redirect to login if refresh failed (but not if already on login)
-        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-          window.location.href = "/login";
-        }
-        throw new Error("Session expired");
       }
-    }
 
-    if (!response.ok) {
-      const error = (await response.json()) as APIError;
-      throw new Error(error.error || `Request failed with status ${response.status}`);
-    }
+      if (!response.ok) {
+        const error = (await response.json()) as APIError;
+        const errorMsg =
+          error.error || `Request failed with status ${response.status}`;
+        addApiBreadcrumb(method, endpoint, response.status, errorMsg);
+        throw new Error(errorMsg);
+      }
 
-    // Handle empty responses (e.g., DELETE)
-    const text = await response.text();
-    if (!text) {
-      return {} as T;
-    }
+      // Handle empty responses (e.g., DELETE)
+      const text = await response.text();
+      if (!text) {
+        return {} as T;
+      }
 
-    return JSON.parse(text) as T;
+      return JSON.parse(text) as T;
+    } catch (error) {
+      // Capture unexpected errors (not session expiry which is handled)
+      if (
+        error instanceof Error &&
+        !error.message.includes("Session expired")
+      ) {
+        captureError(error, { endpoint, method });
+      }
+      throw error;
+    }
   }
 
   private async refreshToken(): Promise<boolean> {
