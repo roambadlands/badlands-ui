@@ -8,13 +8,17 @@ Badlands UI is a ChatGPT-like web interface built with Next.js 16 (App Router), 
 
 ## Commands
 
+This project uses a Makefile for common tasks. Run `make help` to see all targets.
+
 ```bash
-npm run dev          # Start development server (port 3000)
-npm run build        # Production build
-npm run lint         # ESLint check
-npm test             # Run unit tests (Vitest)
-npm run test:watch   # Unit tests in watch mode
-npm run test:e2e     # Playwright E2E tests
+make dev             # Start development server (port 3000)
+make build           # Production build
+make lint            # ESLint check
+make test            # Run unit tests (Vitest)
+make test-watch      # Unit tests in watch mode
+make test-e2e        # Playwright E2E tests
+make test-all        # Run all tests (unit + e2e)
+make clean           # Remove build artifacts
 ```
 
 ## Architecture
