@@ -4,10 +4,12 @@ import { useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 import { ChatLayout } from "@/components/layout/chat-layout";
 import { MessageList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/chat-input";
 import { GlobalProgressIndicator } from "@/components/chat/global-progress-indicator";
+import { MessageListErrorBoundary, ChatAreaErrorBoundary } from "@/components/error-boundary";
 import { useSessions, useSession, useCreateSession, useDeleteSession, useUpdateSession } from "@/lib/hooks/use-sessions";
 import { useSessionStore } from "@/store/session-store";
 import { useChatStore } from "@/store/chat-store";
@@ -192,6 +194,9 @@ export default function ChatSessionPage() {
   // Handle sending a message
   const handleSendMessage = useCallback(
     async (content: string) => {
+      // Track message send metric
+      Sentry.metrics.count("chat.message.send.count", 1);
+
       // Add optimistic user message
       const userMessage: Message = {
         id: `temp-${Date.now()}`,
@@ -273,24 +278,30 @@ export default function ChatSessionPage() {
       onRenameSession={handleRenameSession}
       isRenaming={updateSession.isPending}
     >
-      <MessageList
-        messages={messages}
-        sessionId={sessionId}
-        isStreaming={isStreaming}
-        streamingContent={streamingContent}
-        streamingContentBlocks={getContentBlocks()}
-        streamingToolCalls={getToolCalls()}
-        streamingCitations={streamingCitations}
-        onSelectPrompt={handleSendMessage}
-        onRetryMessage={handleRetryMessage}
-      />
-      <GlobalProgressIndicator />
-      <ChatInput
-        onSend={handleSendMessage}
-        onStop={stopStreaming}
-        isStreaming={isStreaming}
-        disabled={isLoadingSession}
-      />
+      <ChatAreaErrorBoundary onReset={() => window.location.reload()}>
+        <MessageListErrorBoundary
+          onReset={() => queryClient.invalidateQueries({ queryKey: ["session", sessionId] })}
+        >
+          <MessageList
+            messages={messages}
+            sessionId={sessionId}
+            isStreaming={isStreaming}
+            streamingContent={streamingContent}
+            streamingContentBlocks={getContentBlocks()}
+            streamingToolCalls={getToolCalls()}
+            streamingCitations={streamingCitations}
+            onSelectPrompt={handleSendMessage}
+            onRetryMessage={handleRetryMessage}
+          />
+        </MessageListErrorBoundary>
+        <GlobalProgressIndicator />
+        <ChatInput
+          onSend={handleSendMessage}
+          onStop={stopStreaming}
+          isStreaming={isStreaming}
+          disabled={isLoadingSession}
+        />
+      </ChatAreaErrorBoundary>
     </ChatLayout>
   );
 }

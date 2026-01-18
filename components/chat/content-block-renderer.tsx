@@ -28,6 +28,7 @@ import type {
 } from "@/lib/types";
 
 import "katex/dist/katex.min.css";
+import { ContentBlockErrorBoundary } from "@/components/error-boundary";
 
 interface ContentBlockRendererProps {
   blocks: ContentBlock[];
@@ -36,12 +37,16 @@ interface ContentBlockRendererProps {
 /**
  * Renders an array of structured content blocks.
  * Each block type has its own dedicated renderer for optimal display.
+ * Individual blocks are wrapped in error boundaries to prevent one failed block
+ * from breaking the entire message.
  */
 export function ContentBlockRenderer({ blocks }: ContentBlockRendererProps) {
   return (
     <div className="space-y-4">
       {blocks.map((block, index) => (
-        <BlockRenderer key={index} block={block} />
+        <ContentBlockErrorBoundary key={index}>
+          <BlockRenderer block={block} />
+        </ContentBlockErrorBoundary>
       ))}
     </div>
   );

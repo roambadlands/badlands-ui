@@ -9,7 +9,7 @@ import type {
   StatusResponse,
 } from "./types";
 import { env } from "./env";
-import { addApiBreadcrumb, captureError } from "./sentry";
+import { addApiBreadcrumb, captureError, getTracingHeaders } from "./sentry";
 
 class APIClient {
   private baseUrl: string;
@@ -45,6 +45,7 @@ class APIClient {
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken,
+          ...getTracingHeaders(),
           ...options.headers,
         },
       });
@@ -63,6 +64,7 @@ class APIClient {
             headers: {
               "Content-Type": "application/json",
               "X-CSRF-Token": this.getCsrfToken(),
+              ...getTracingHeaders(),
               ...options.headers,
             },
           });
@@ -140,6 +142,7 @@ class APIClient {
         credentials: "include",
         headers: {
           "X-CSRF-Token": this.getCsrfToken(),
+          ...getTracingHeaders(),
         },
       });
 

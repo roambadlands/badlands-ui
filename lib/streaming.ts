@@ -15,7 +15,7 @@ import type {
   ContentBlock,
 } from "./types";
 import { env } from "./env";
-import { addStreamingBreadcrumb, captureError } from "./sentry";
+import { addStreamingBreadcrumb, captureError, getTracingHeaders } from "./sentry";
 
 function getCsrfToken(): string {
   // Read CSRF token from cookie (double-submit pattern)
@@ -34,6 +34,7 @@ async function refreshToken(): Promise<boolean> {
       credentials: "include",
       headers: {
         "X-CSRF-Token": getCsrfToken(),
+        ...getTracingHeaders(),
       },
     });
 
@@ -118,15 +119,19 @@ function parseSSEEvent(eventType: string, data: string): SSEEvent | null {
 function handleSSEEvent(event: SSEEvent, callbacks: StreamCallbacks): void {
   switch (event.type) {
     case "content":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "content" } });
       callbacks.onContent?.(event.data.text);
       break;
     case "content_block":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "content_block" } });
       callbacks.onContentBlock?.(event.data.index, event.data.block);
       break;
     case "tool_call_start":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "tool_call_start" } });
       callbacks.onToolCallStart?.(event.data.id, event.data.tool);
       break;
     case "tool_call_end":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "tool_call_end" } });
       callbacks.onToolCallEnd?.(
         event.data.id,
         event.data.tool,
@@ -135,6 +140,7 @@ function handleSSEEvent(event: SSEEvent, callbacks: StreamCallbacks): void {
       );
       break;
     case "citation":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "citation" } });
       callbacks.onCitation?.(
         event.data.source,
         event.data.source_ref,
@@ -142,6 +148,9 @@ function handleSSEEvent(event: SSEEvent, callbacks: StreamCallbacks): void {
       );
       break;
     case "usage":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "usage" } });
+      Sentry.metrics.gauge("chat.streaming.tokens.total", event.data.total_tokens);
+      Sentry.metrics.gauge("chat.streaming.cost_usd", event.data.cost_usd);
       callbacks.onUsage?.(
         event.data.input_tokens,
         event.data.output_tokens,
@@ -150,9 +159,11 @@ function handleSSEEvent(event: SSEEvent, callbacks: StreamCallbacks): void {
       );
       break;
     case "done":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "done" } });
       callbacks.onDone?.(event.data.message_id);
       break;
     case "error":
+      Sentry.metrics.count("chat.streaming.event.count", 1, { attributes: { type: "error" } });
       callbacks.onError?.(event.data.code, event.data.message);
       break;
     case "progress":
@@ -189,6 +200,7 @@ export async function streamMessage(
             "Content-Type": "application/json",
             Accept: "text/event-stream",
             "X-CSRF-Token": getCsrfToken(),
+            ...getTracingHeaders(),
           },
           body: JSON.stringify(request),
           credentials: "include",

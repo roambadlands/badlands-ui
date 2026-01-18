@@ -116,15 +116,23 @@ export function setTag(key: string, value: string | number | boolean) {
 }
 
 /**
- * Log a message to Sentry Logs (requires _experiments.enableLogs)
+ * Get distributed tracing headers for cross-service correlation.
+ * These headers should be included in API requests to the backend.
  */
-export function logMessage(
-  level: "debug" | "info" | "warning" | "error" | "fatal",
-  message: string,
-  context?: Record<string, unknown>
-) {
-  Sentry.captureMessage(message, {
-    level,
-    extra: context,
-  });
+export function getTracingHeaders(): Record<string, string> {
+  const span = Sentry.getActiveSpan();
+  if (!span) return {};
+
+  const headers: Record<string, string> = {};
+  const traceHeader = Sentry.spanToTraceHeader(span);
+  const baggageHeader = Sentry.spanToBaggageHeader(span);
+
+  if (traceHeader) {
+    headers["sentry-trace"] = traceHeader;
+  }
+  if (baggageHeader) {
+    headers["baggage"] = baggageHeader;
+  }
+
+  return headers;
 }
