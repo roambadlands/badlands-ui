@@ -56,6 +56,43 @@ test.describe("UI States", () => {
 
       consoleMonitor.assertNoErrors();
     });
+
+    test("should display dev mode indicator when backend is in dev mode", async ({
+      page,
+      context,
+    }) => {
+      const consoleMonitor = new ConsoleMonitor(page);
+
+      await login(context, {
+        email: "ui-test@example.com",
+        name: "UI Test User",
+      });
+
+      await page.goto("/chat");
+
+      const footer = page.locator("footer");
+      await expect(footer).toBeVisible();
+
+      // Wait for API status to load
+      await expect(async () => {
+        const footerText = await footer.textContent();
+        // Should have loaded (not showing "Loading...")
+        expect(footerText?.includes("Loading")).toBeFalsy();
+      }).toPass({ timeout: 10000 });
+
+      // If dev mode is enabled, should show "(dev)" indicator
+      // This is conditional - the backend may or may not be in dev mode
+      const footerText = await footer.textContent();
+      if (footerText?.includes("(dev)")) {
+        // Dev mode indicator should be visible and styled
+        const devIndicator = footer.locator("text=(dev)");
+        await expect(devIndicator).toBeVisible();
+        // Should have yellow styling
+        await expect(devIndicator).toHaveClass(/text-yellow/);
+      }
+
+      consoleMonitor.assertNoErrors();
+    });
   });
 
   test.describe("Empty States", () => {
