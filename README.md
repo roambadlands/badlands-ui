@@ -91,13 +91,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ```bash
 # Install dependencies
-npm install
+make install
 
 # Copy environment file
 cp .env.example .env.local
 
 # Run development server
-npm run dev
+make dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -106,10 +106,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```bash
 # Build for production
-npm run build
+make build
 
 # Start production server
-npm start
+make start
 ```
 
 ## Testing
@@ -118,13 +118,13 @@ npm start
 
 ```bash
 # Run unit tests
-npm test
+make test
 
 # Run with watch mode
-npm run test:watch
+make test-watch
 
 # Run with coverage
-npm run test:coverage
+make test-coverage
 ```
 
 ### E2E Tests
@@ -134,10 +134,13 @@ npm run test:coverage
 npx playwright install
 
 # Run E2E tests
-npm run test:e2e
+make test-e2e
 
 # Run with UI
-npm run test:e2e:ui
+make test-e2e-ui
+
+# Run all tests (unit + e2e)
+make test-all
 ```
 
 ## How Streaming Works
@@ -209,17 +212,23 @@ npm run test:e2e:ui
 
 ## Commands Reference
 
+This project uses a Makefile for common tasks. Run `make help` to see all available targets.
+
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm test` | Run unit tests |
-| `npm run test:watch` | Run unit tests in watch mode |
-| `npm run test:coverage` | Run tests with coverage report |
-| `npm run test:e2e` | Run E2E tests |
-| `npm run test:e2e:ui` | Run E2E tests with UI |
+| `make install` | Install dependencies |
+| `make dev` | Start development server |
+| `make build` | Build for production |
+| `make start` | Start production server |
+| `make lint` | Run ESLint |
+| `make test` | Run unit tests |
+| `make test-watch` | Run unit tests in watch mode |
+| `make test-coverage` | Run tests with coverage report |
+| `make test-e2e` | Run E2E tests |
+| `make test-e2e-ui` | Run E2E tests with UI |
+| `make test-all` | Run all tests (unit + e2e) |
+| `make clean` | Remove build artifacts |
+| `make clean-all` | Remove build artifacts and node_modules |
 
 ## License
 
