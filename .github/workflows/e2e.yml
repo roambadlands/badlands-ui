@@ -1,0 +1,81 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  NEXT_PUBLIC_BACKEND_URL: http://localhost:8080
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: roambadlands/badlands-backend
+          path: badlands-backend
+          token: ${{ secrets.BACKEND_REPO_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend services
+        run: |
+          docker compose -f docker-compose.e2e.yml up -d --wait --build
+        env:
+          BACKEND_PATH: ./badlands-backend
+
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/health > /dev/null; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CI: true
+          E2E_SKIP_DOCKER: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test videos
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-videos
+          path: test-results/
+          retention-days: 7
+
+      - name: Stop backend services
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml down

@@ -76,6 +76,7 @@ export function ChatInput({
             disabled={disabled}
             className="min-h-[44px] max-h-[200px] resize-none"
             rows={1}
+            data-testid="message-input"
           />
           {isStreaming ? (
             <Button
@@ -83,6 +84,7 @@ export function ChatInput({
               variant="destructive"
               size="icon"
               className="shrink-0"
+              data-testid="stop-button"
             >
               <Square className="h-4 w-4" />
             </Button>
@@ -92,6 +94,7 @@ export function ChatInput({
               disabled={disabled || !message.trim()}
               size="icon"
               className="shrink-0"
+              data-testid="send-button"
             >
               <Send className="h-4 w-4" />
             </Button>

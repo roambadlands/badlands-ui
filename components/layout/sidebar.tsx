@@ -160,7 +160,7 @@ export function Sidebar({
         style={{ width: width ? `${width}px` : "256px" }}
       >
         <div className="p-4">
-          <Button onClick={onNewChat} className="w-full gap-2">
+          <Button onClick={onNewChat} className="w-full gap-2" data-testid="new-chat-button">
             <Plus className="h-4 w-4" />
             New Chat
           </Button>
@@ -188,6 +188,7 @@ export function Sidebar({
                       "bg-sidebar-accent text-sidebar-accent-foreground"
                   )}
                   onClick={() => onSelectSession(session.id)}
+                  data-testid={`session-item-${session.id}`}
                 >
                   {/* Content area */}
                   <div className="flex items-center gap-2 py-2 pl-3 pr-8 overflow-hidden">

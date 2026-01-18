@@ -1,0 +1,69 @@
+# Docker Compose configuration for E2E testing
+# Provides PostgreSQL and backend services; frontend runs on host
+#
+# Usage:
+#   docker compose -f docker-compose.e2e.yml up -d --wait --build
+#
+# Backend path configuration:
+#   - Local dev: uses BACKEND_PATH env var or defaults to ../badlands-backend
+#   - CI: set BACKEND_PATH=./badlands-backend (checked out in workflow)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: badlands_test
+      POSTGRES_USER: badlands
+      POSTGRES_PASSWORD: badlands
+    # Use tmpfs for fast, ephemeral storage
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U badlands -d badlands_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    networks:
+      - e2e
+
+  backend:
+    build:
+      context: ${BACKEND_PATH:-../badlands-backend}
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      TEST_MODE: "true"
+      DATABASE_URL: postgres://badlands:badlands@postgres:5432/badlands_test?sslmode=disable
+      # JWT configuration for testing
+      JWT_SECRET_KEY: test-jwt-secret-for-e2e-testing
+      JWT_ACCESS_TOKEN_TTL: "15m"
+      JWT_REFRESH_TOKEN_TTL: "168h"
+      JWT_ISSUER: badlands-test
+      JWT_COOKIE_DOMAIN: ""
+      JWT_COOKIE_SECURE: "false"
+      JWT_COOKIE_SAMESITE: "Lax"
+      # CORS - allow frontend on localhost:3000
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+      # Disable external services
+      OTEL_TRACING_ENABLED: "false"
+      # Dummy OAuth config to enable /v1/auth routes (needed for test-login)
+      # These are not real credentials and won't work for actual OAuth
+      GOOGLE_CLIENT_ID: "dummy-for-test-login"
+      GOOGLE_CLIENT_SECRET: "dummy-for-test-login"
+      GOOGLE_REDIRECT_URI: "http://localhost:8080/v1/auth/google/callback"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - e2e
+
+networks:
+  e2e:
+    driver: bridge

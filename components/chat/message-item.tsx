@@ -177,6 +177,7 @@ export function MessageItem({
         "flex gap-4 p-4",
         isUser ? "bg-background" : "bg-muted/50"
       )}
+      data-testid={isUser ? "user-message" : "assistant-message"}
     >
       <div
         className={cn(

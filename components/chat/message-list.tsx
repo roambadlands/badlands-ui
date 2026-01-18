@@ -134,7 +134,7 @@ export function MessageList({
 
         {/* Show waiting indicator when streaming but no content yet */}
         {isStreaming && !streamingContent && streamingToolCalls?.length === 0 && (
-          <div className="flex gap-4 p-4 bg-muted/50">
+          <div className="flex gap-4 p-4 bg-muted/50" data-testid="assistant-message">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
               <Bot className="h-5 w-5" />
             </div>

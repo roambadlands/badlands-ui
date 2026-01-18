@@ -50,7 +50,7 @@ export function Header() {
         ) : user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="user-menu">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
                     {getInitials(user.name, user.email)}
@@ -73,7 +73,7 @@ export function Header() {
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
+              <DropdownMenuItem onClick={handleLogout} data-testid="logout-button">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
