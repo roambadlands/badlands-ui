@@ -227,4 +227,218 @@ test.describe("Sessions", () => {
 
     consoleMonitor.assertNoErrors();
   });
+
+  test("should cancel rename with Cancel button", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Create a session
+    await page.getByTestId("message-input").fill("Session to not rename");
+    await page.getByTestId("send-button").click();
+    await expect(page.getByTestId("user-message")).toBeVisible();
+
+    // Wait for session to appear
+    const sessionItem = page.locator('[data-testid^="session-item-"]').first();
+    await expect(sessionItem).toBeVisible({ timeout: 10000 });
+
+    // Wait for streaming to complete
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
+    // Get the original title
+    const originalTitle = await sessionItem.textContent();
+
+    // Open rename dialog
+    await sessionItem.locator("button").click();
+    await page.getByRole("menuitem", { name: /rename/i }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Type a new name
+    const input = page.getByRole("textbox", { name: /session title/i });
+    await input.clear();
+    await input.fill("This should not save");
+
+    // Cancel
+    await page.getByRole("button", { name: /cancel/i }).click();
+
+    // Dialog should close
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+
+    // Title should remain unchanged
+    const currentTitle = await sessionItem.textContent();
+    expect(currentTitle).toBe(originalTitle);
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should cancel rename with Escape key", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Create a session
+    await page.getByTestId("message-input").fill("Session for escape test");
+    await page.getByTestId("send-button").click();
+    await expect(page.getByTestId("user-message")).toBeVisible();
+
+    // Wait for session to appear
+    const sessionItem = page.locator('[data-testid^="session-item-"]').first();
+    await expect(sessionItem).toBeVisible({ timeout: 10000 });
+
+    // Wait for streaming to complete
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
+    // Get the original title
+    const originalTitle = await sessionItem.textContent();
+
+    // Open rename dialog
+    await sessionItem.locator("button").click();
+    await page.getByRole("menuitem", { name: /rename/i }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Type a new name
+    const input = page.getByRole("textbox", { name: /session title/i });
+    await input.clear();
+    await input.fill("This should not save either");
+
+    // Press Escape
+    await input.press("Escape");
+
+    // Dialog should close
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+
+    // Title should remain unchanged
+    const currentTitle = await sessionItem.textContent();
+    expect(currentTitle).toBe(originalTitle);
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should submit rename with Enter key", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Create a session
+    await page.getByTestId("message-input").fill("Session for enter test");
+    await page.getByTestId("send-button").click();
+    await expect(page.getByTestId("user-message")).toBeVisible();
+
+    // Wait for session to appear
+    const sessionItem = page.locator('[data-testid^="session-item-"]').first();
+    await expect(sessionItem).toBeVisible({ timeout: 10000 });
+
+    // Wait for streaming to complete
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
+    // Open rename dialog
+    await sessionItem.locator("button").click();
+    await page.getByRole("menuitem", { name: /rename/i }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Type a new name and press Enter
+    const input = page.getByRole("textbox", { name: /session title/i });
+    await input.clear();
+    await input.fill("Renamed via Enter");
+    await input.press("Enter");
+
+    // Dialog should close
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+
+    // Session should show new name
+    await expect(sessionItem).toContainText("Renamed via Enter");
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should truncate title to max length", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Create a session
+    await page.getByTestId("message-input").fill("Session for max length test");
+    await page.getByTestId("send-button").click();
+    await expect(page.getByTestId("user-message")).toBeVisible();
+
+    // Wait for session to appear
+    const sessionItem = page.locator('[data-testid^="session-item-"]').first();
+    await expect(sessionItem).toBeVisible({ timeout: 10000 });
+
+    // Wait for streaming to complete
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
+    // Open rename dialog
+    await sessionItem.locator("button").click();
+    await page.getByRole("menuitem", { name: /rename/i }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Try to enter a very long title (over 255 chars)
+    // The input has maxLength=255, so it will truncate automatically
+    const input = page.getByRole("textbox", { name: /session title/i });
+    const longTitle = "A".repeat(300);
+    await input.clear();
+    await input.fill(longTitle);
+
+    // The input value should be truncated to 255 characters due to maxLength
+    const inputValue = await input.inputValue();
+    expect(inputValue.length).toBeLessThanOrEqual(255);
+
+    // Close the dialog via Escape
+    await input.press("Escape");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should show session date formatting", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Create a session
+    await page.getByTestId("message-input").fill("Session for date test");
+    await page.getByTestId("send-button").click();
+    await expect(page.getByTestId("user-message")).toBeVisible();
+
+    // Wait for session to appear
+    const sessionItem = page.locator('[data-testid^="session-item-"]').first();
+    await expect(sessionItem).toBeVisible({ timeout: 10000 });
+
+    // Session should show "Today" for newly created session
+    await expect(sessionItem).toContainText("Today");
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should highlight active session in sidebar", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Create first session
+    await page.getByTestId("message-input").fill("First session");
+    await page.getByTestId("send-button").click();
+    await expect(page.locator('[data-testid^="session-item-"]').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
+    const firstSession = page.locator('[data-testid^="session-item-"]').first();
+
+    // First session should be active (has accent background)
+    await expect(firstSession).toHaveClass(/bg-sidebar-accent/);
+
+    // Create second session
+    await page.getByTestId("new-chat-button").click();
+    await page.waitForTimeout(500);
+    await page.getByTestId("message-input").fill("Second session");
+    await page.getByTestId("send-button").click();
+    await expect(page.locator('[data-testid^="session-item-"]')).toHaveCount(2, { timeout: 10000 });
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
+    // The active session (second one, which is now first due to recency) should be highlighted
+    const activeSession = page.locator('[data-testid^="session-item-"].bg-sidebar-accent');
+    await expect(activeSession).toBeVisible();
+
+    consoleMonitor.assertNoErrors();
+  });
 });

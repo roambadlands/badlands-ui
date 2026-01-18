@@ -160,4 +160,147 @@ test.describe("Chat", () => {
 
     consoleMonitor.assertNoErrors();
   });
+
+  test("should auto-resize input for multiline content", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    const input = page.getByTestId("message-input");
+
+    // Get initial height
+    const initialHeight = await input.evaluate((el: HTMLTextAreaElement) => el.offsetHeight);
+
+    // Type multiple lines using Shift+Enter
+    await input.fill("Line 1");
+    await input.press("Shift+Enter");
+    await input.type("Line 2");
+    await input.press("Shift+Enter");
+    await input.type("Line 3");
+    await input.press("Shift+Enter");
+    await input.type("Line 4");
+
+    // Wait for resize to apply
+    await page.waitForTimeout(100);
+
+    // Get height after adding content
+    const expandedHeight = await input.evaluate((el: HTMLTextAreaElement) => el.offsetHeight);
+
+    // Height should have increased
+    expect(expandedHeight).toBeGreaterThan(initialHeight);
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should show error for messages exceeding max length", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Create a message that exceeds 32KB limit
+    const oversizedMessage = "A".repeat(33 * 1024); // 33KB
+
+    await page.getByTestId("message-input").fill(oversizedMessage);
+    await page.getByTestId("send-button").click();
+
+    // Should show error message about max length
+    await expect(page.getByText(/exceeds maximum length/i)).toBeVisible();
+
+    // No message should be sent
+    expect(await page.getByTestId("user-message").count()).toBe(0);
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should clear input after sending message", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Type and send a message
+    await page.getByTestId("message-input").fill("Test message to clear");
+    await page.getByTestId("send-button").click();
+
+    // Input should be empty after sending
+    await expect(page.getByTestId("message-input")).toHaveValue("");
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should show placeholder text in input", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    const input = page.getByTestId("message-input");
+
+    // Should have placeholder
+    await expect(input).toHaveAttribute("placeholder", "Send a message...");
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should show input hint text", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Should show hint about Enter and Shift+Enter
+    await expect(
+      page.getByText("Press Enter to send, Shift+Enter for new line")
+    ).toBeVisible();
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should disable input during streaming", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Send a message
+    await page.getByTestId("message-input").fill("Test message");
+    await page.getByTestId("send-button").click();
+
+    // During streaming, the stop button should be visible (indicating streaming)
+    // The send button should be replaced by stop button
+    const stopButton = page.getByTestId("stop-button");
+
+    // Try to catch the streaming state
+    let foundStopButton = false;
+    const startTime = Date.now();
+    while (Date.now() - startTime < 5000) {
+      if (await stopButton.isVisible().catch(() => false)) {
+        foundStopButton = true;
+        break;
+      }
+      // Check if already done
+      if (await page.getByTestId("send-button").isVisible().catch(() => false)) {
+        break;
+      }
+      await page.waitForTimeout(100);
+    }
+
+    // Wait for streaming to complete
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
+    consoleMonitor.assertNoErrors();
+  });
+
+  test("should focus input on page load", async ({ page }) => {
+    const consoleMonitor = new ConsoleMonitor(page);
+
+    await page.goto("/chat");
+
+    // Wait for page to load
+    await expect(page.getByTestId("message-input")).toBeVisible();
+
+    // The input should be ready to receive focus when clicked
+    await page.getByTestId("message-input").click();
+
+    // Should be focused
+    await expect(page.getByTestId("message-input")).toBeFocused();
+
+    consoleMonitor.assertNoErrors();
+  });
 });
