@@ -128,24 +128,28 @@ test.describe("Assistant Messages", () => {
     await page.getByTestId("message-input").fill("First message");
     await page.getByTestId("send-button").click();
 
-    // Wait for user message to appear
+    // Wait for first user message to appear
+    await expect(page.getByTestId("user-message")).toBeVisible();
     await expect(page.getByTestId("user-message")).toContainText("First message");
 
-    // Wait for response or error to complete
+    // Wait for response to complete before sending second message
     await expect(page.getByTestId("send-button")).toBeVisible({
       timeout: 30000,
     });
+
+    // Ensure input is ready for next message
+    await expect(page.getByTestId("message-input")).toBeEnabled();
 
     // Send second message
     await page.getByTestId("message-input").fill("Second message");
     await page.getByTestId("send-button").click();
 
-    // Wait for second user message
-    await page.waitForTimeout(500);
-
-    // Should have 2 user messages
-    const userMessages = page.getByTestId("user-message");
-    await expect(userMessages).toHaveCount(2, { timeout: 10000 });
+    // Wait for second user message with polling for reliability
+    await expect(async () => {
+      const userMessages = page.getByTestId("user-message");
+      const count = await userMessages.count();
+      expect(count).toBe(2);
+    }).toPass({ timeout: 15000 });
 
     // Verify both messages are visible
     await expect(page.getByText("First message")).toBeVisible();

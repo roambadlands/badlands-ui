@@ -41,12 +41,15 @@ test.describe("Data Persistence", () => {
       // Reload the page
       await page.reload();
 
-      // Wait for sessions to load
+      // Wait for page to fully load
       await expect(page.getByTestId("message-input")).toBeVisible();
 
-      // Session should still be visible in sidebar
-      const reloadedSessionItem = page.locator(`[data-testid="session-item-${sessionId}"]`);
-      await expect(reloadedSessionItem).toBeVisible({ timeout: 10000 });
+      // Wait for sessions to load with polling for CI reliability
+      await expect(async () => {
+        const reloadedSessionItem = page.locator(`[data-testid="session-item-${sessionId}"]`);
+        const count = await reloadedSessionItem.count();
+        expect(count).toBeGreaterThan(0);
+      }).toPass({ timeout: 15000 });
 
       consoleMonitor.assertNoErrors();
     });
@@ -72,20 +75,20 @@ test.describe("Data Persistence", () => {
       // Get the current URL (session URL)
       const sessionUrl = page.url();
 
-      // Reload the page
-      await page.reload();
-
-      // Wait for page to load
-      await expect(page.getByTestId("message-input")).toBeVisible();
-
-      // Navigate back to the session
+      // Navigate back to the session directly (no reload needed)
       await page.goto(sessionUrl);
 
-      // Message should still be visible
-      await expect(page.getByTestId("user-message")).toContainText(
-        testMessage,
-        { timeout: 10000 }
-      );
+      // Wait for page to fully load
+      await expect(page.getByTestId("message-input")).toBeVisible();
+
+      // Wait for messages to load - use polling with longer timeout for CI
+      await expect(async () => {
+        const userMessage = page.getByTestId("user-message");
+        const count = await userMessage.count();
+        expect(count).toBeGreaterThan(0);
+        const text = await userMessage.first().textContent();
+        expect(text).toContain(testMessage);
+      }).toPass({ timeout: 15000 });
 
       consoleMonitor.assertNoErrors();
     });

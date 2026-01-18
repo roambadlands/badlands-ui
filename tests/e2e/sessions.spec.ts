@@ -156,15 +156,22 @@ test.describe("Sessions", () => {
     await page.getByTestId("send-button").click();
     await expect(page.getByTestId("user-message")).toBeVisible();
 
+    // Wait for streaming to complete
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
     // Wait for session to appear
     const sessionItem = page.locator('[data-testid^="session-item-"]').first();
     await expect(sessionItem).toBeVisible({ timeout: 10000 });
 
-    // Open session menu (click the more button)
-    await sessionItem.locator("button").click();
+    // Open session menu (click the more button) - wait for menu to be ready
+    const menuButton = sessionItem.locator("button");
+    await expect(menuButton).toBeVisible();
+    await menuButton.click();
 
-    // Click delete
-    await page.getByRole("menuitem", { name: /delete/i }).click();
+    // Wait for menu to appear
+    const deleteMenuItem = page.getByRole("menuitem", { name: /delete/i });
+    await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
+    await deleteMenuItem.click();
 
     // Confirmation dialog should appear
     await expect(page.getByRole("dialog")).toBeVisible();
@@ -177,9 +184,13 @@ test.describe("Sessions", () => {
     // Session should still exist
     await expect(sessionItem).toBeVisible();
 
-    // Now delete for real
-    await sessionItem.locator("button").click();
-    await page.getByRole("menuitem", { name: /delete/i }).click();
+    // Now delete for real - need to reopen menu
+    await menuButton.click();
+    await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
+    await deleteMenuItem.click();
+
+    // Wait for dialog and click delete
+    await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("button", { name: /delete/i }).click();
 
     // Session should be removed
@@ -198,21 +209,29 @@ test.describe("Sessions", () => {
     await page.getByTestId("send-button").click();
     await expect(page.getByTestId("user-message")).toBeVisible();
 
+    // Wait for streaming to complete
+    await expect(page.getByTestId("send-button")).toBeVisible({ timeout: 30000 });
+
     // Wait for session to appear
     const sessionItem = page.locator('[data-testid^="session-item-"]').first();
     await expect(sessionItem).toBeVisible({ timeout: 10000 });
 
-    // Open session menu
-    await sessionItem.locator("button").click();
+    // Open session menu - wait for menu button to be ready
+    const menuButton = sessionItem.locator("button");
+    await expect(menuButton).toBeVisible();
+    await menuButton.click();
 
-    // Click rename
-    await page.getByRole("menuitem", { name: /rename/i }).click();
+    // Wait for menu to appear and click rename
+    const renameMenuItem = page.getByRole("menuitem", { name: /rename/i });
+    await expect(renameMenuItem).toBeVisible({ timeout: 5000 });
+    await renameMenuItem.click();
 
     // Rename dialog should appear
     await expect(page.getByRole("dialog")).toBeVisible();
 
     // Clear and enter new name
     const input = page.getByRole("textbox", { name: /session title/i });
+    await expect(input).toBeVisible();
     await input.clear();
     await input.fill("My Renamed Session");
 
@@ -223,7 +242,7 @@ test.describe("Sessions", () => {
     await expect(page.getByRole("dialog")).not.toBeVisible();
 
     // Session should show new name
-    await expect(sessionItem).toContainText("My Renamed Session");
+    await expect(sessionItem).toContainText("My Renamed Session", { timeout: 5000 });
 
     consoleMonitor.assertNoErrors();
   });
