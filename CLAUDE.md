@@ -69,3 +69,42 @@ SSE parser handling event types: `content`, `tool_call_start`, `tool_call_end`, 
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+## Browser Testing with Agent Browser (MCP)
+
+The `chrome-devtools` MCP server provides browser automation tools for visually testing UI changes. Use these tools to verify UI implementations without requiring manual testing.
+
+### When to Use
+
+- After making UI/component changes to verify they render correctly
+- Testing interactive elements (buttons, forms, navigation)
+- Debugging visual issues or layout problems
+- Verifying responsive behavior
+
+### Key Tools
+
+| Tool | Purpose |
+|------|---------|
+| `navigate_page` | Navigate to a URL (use `http://localhost:3000` for dev) |
+| `take_snapshot` | Get page content as accessible text (preferred over screenshots) |
+| `take_screenshot` | Capture visual screenshot of page or element |
+| `click` | Click on elements by their `uid` from snapshot |
+| `fill` | Fill form inputs/textareas by `uid` |
+| `hover` | Hover over elements to trigger hover states |
+| `list_console_messages` | Check for console errors/warnings |
+| `list_network_requests` | Inspect API calls |
+
+### Typical Workflow
+
+1. **Navigate**: `navigate_page` to `http://localhost:3000` (or specific route)
+2. **Snapshot**: `take_snapshot` to get element UIDs and page structure
+3. **Interact**: Use `click`, `fill`, `hover` with UIDs from snapshot
+4. **Verify**: Take another snapshot or screenshot to confirm changes
+5. **Debug**: Check `list_console_messages` for errors if something fails
+
+### Best Practices
+
+- Always take a fresh snapshot before interacting (UIDs change between page loads)
+- Prefer `take_snapshot` over `take_screenshot` for understanding page structure
+- Use `list_console_messages` to catch JavaScript errors after interactions
+- The dev server (`npm run dev`) must be running for browser testing
