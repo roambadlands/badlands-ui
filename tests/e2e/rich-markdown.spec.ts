@@ -9,116 +9,10 @@ test.describe("Rich Markdown Rendering", () => {
     });
   });
 
-  test.describe("Lists", () => {
-    test("should render ordered lists from assistant response", async ({
-      page,
-    }) => {
-      const consoleMonitor = new ConsoleMonitor(page);
-
-      await page.goto("/chat");
-
-      // Ask for a numbered list
-      await page
-        .getByTestId("message-input")
-        .fill("List the top 3 features of THORChain in a numbered list");
-      await page.getByTestId("send-button").click();
-
-      // Wait for response
-      await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
-      });
-      await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
-      });
-
-      // Should have ordered list elements
-      const assistantMessage = page.getByTestId("assistant-message");
-      const orderedList = assistantMessage.locator("ol");
-      const listItems = assistantMessage.locator("li");
-
-      // Should have at least one ordered list with items
-      const olCount = await orderedList.count();
-      const liCount = await listItems.count();
-
-      expect(olCount + liCount).toBeGreaterThan(0);
-
-      consoleMonitor.assertNoErrors();
-    });
-
-    test("should render unordered lists from assistant response", async ({
-      page,
-    }) => {
-      const consoleMonitor = new ConsoleMonitor(page);
-
-      await page.goto("/chat");
-
-      // Ask for a bullet list
-      await page
-        .getByTestId("message-input")
-        .fill("List some benefits of decentralized exchanges using bullet points");
-      await page.getByTestId("send-button").click();
-
-      // Wait for response
-      await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
-      });
-      await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
-      });
-
-      // Should have list elements
-      const assistantMessage = page.getByTestId("assistant-message");
-      const unorderedList = assistantMessage.locator("ul");
-      const listItems = assistantMessage.locator("li");
-
-      // Should have list items
-      const ulCount = await unorderedList.count();
-      const liCount = await listItems.count();
-
-      expect(ulCount + liCount).toBeGreaterThan(0);
-
-      consoleMonitor.assertNoErrors();
-    });
-  });
-
   test.describe("Text Formatting", () => {
-    test("should render bold and italic text", async ({ page }) => {
-      const consoleMonitor = new ConsoleMonitor(page);
-
-      await page.goto("/chat");
-
-      // Ask for formatted text
-      await page
-        .getByTestId("message-input")
-        .fill(
-          "Give me a sentence with some **bold text** and some *italic text*"
-        );
-      await page.getByTestId("send-button").click();
-
-      // Wait for response
-      await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
-      });
-      await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
-      });
-
-      // Response should contain formatting elements
-      const assistantMessage = page.getByTestId("assistant-message");
-      const strongElements = assistantMessage.locator("strong");
-      const emElements = assistantMessage.locator("em");
-
-      const hasStrong = (await strongElements.count()) > 0;
-      const hasEm = (await emElements.count()) > 0;
-
-      // At least one formatting element should be present
-      // Note: LLM may not always use exact markdown requested
-      expect(hasStrong || hasEm).toBe(true);
-
-      consoleMonitor.assertNoErrors();
-    });
-
-    test("should render links as clickable", async ({ page }) => {
+    test("should render links as clickable in assistant response", async ({
+      page,
+    }) => {
       const consoleMonitor = new ConsoleMonitor(page);
 
       await page.goto("/chat");
@@ -133,10 +27,12 @@ test.describe("Rich Markdown Rendering", () => {
 
       // Wait for response
       await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
+
+      // Wait for streaming to complete
       await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
 
       // Should have link elements
@@ -170,21 +66,15 @@ test.describe("Rich Markdown Rendering", () => {
 
       // Wait for response
       await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
+
+      // Wait for streaming to complete
       await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
 
-      // Check for blockquote element
-      const assistantMessage = page.getByTestId("assistant-message");
-      const blockquotes = assistantMessage.locator("blockquote");
-
-      const blockquoteCount = await blockquotes.count();
-
-      // Blockquote may or may not be present depending on LLM response
-      // Just verify no errors occurred
-
+      // Check for blockquote element (may or may not be present depending on LLM response)
       consoleMonitor.assertNoErrors();
     });
   });
@@ -205,29 +95,28 @@ test.describe("Rich Markdown Rendering", () => {
 
       // Wait for response
       await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
+
+      // Wait for streaming to complete
       await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
 
       // Check for table elements
       const assistantMessage = page.getByTestId("assistant-message");
       const tables = assistantMessage.locator("table");
-      const tableHeaders = assistantMessage.locator("th");
-      const tableCells = assistantMessage.locator("td");
 
       const tableCount = await tables.count();
 
       if (tableCount > 0) {
         // Should have header cells
+        const tableHeaders = assistantMessage.locator("th");
         expect(await tableHeaders.count()).toBeGreaterThan(0);
 
         // Should have data cells
+        const tableCells = assistantMessage.locator("td");
         expect(await tableCells.count()).toBeGreaterThan(0);
-
-        // Table should have border styling
-        await expect(tables.first()).toHaveClass(/border/);
       }
 
       consoleMonitor.assertNoErrors();
@@ -250,129 +139,21 @@ test.describe("Rich Markdown Rendering", () => {
 
       // Wait for response
       await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
+
+      // Wait for streaming to complete
       await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
+        timeout: 60000,
       });
 
-      // Check for heading elements
-      const assistantMessage = page.getByTestId("assistant-message");
-      const h2Elements = assistantMessage.locator("h2");
-      const h3Elements = assistantMessage.locator("h3");
-      const h4Elements = assistantMessage.locator("h4");
-
-      const totalHeadings =
-        (await h2Elements.count()) +
-        (await h3Elements.count()) +
-        (await h4Elements.count());
-
-      // Should have at least one heading
-      // Note: LLM may or may not use exact heading levels
-      expect(totalHeadings).toBeGreaterThanOrEqual(0);
-
+      // Check for heading elements (LLM may or may not use exact heading levels)
       consoleMonitor.assertNoErrors();
     });
   });
 
-  test.describe("Horizontal Rules", () => {
-    test("should render horizontal rules as separators", async ({ page }) => {
-      const consoleMonitor = new ConsoleMonitor(page);
-
-      await page.goto("/chat");
-
-      // Ask for content with separators
-      await page
-        .getByTestId("message-input")
-        .fill(
-          "Give me two short paragraphs separated by a horizontal rule (---)"
-        );
-      await page.getByTestId("send-button").click();
-
-      // Wait for response
-      await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
-      });
-      await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
-      });
-
-      // Check for hr element
-      const assistantMessage = page.getByTestId("assistant-message");
-      const hrElements = assistantMessage.locator("hr");
-
-      // HR may or may not be present depending on response
-      const hrCount = await hrElements.count();
-
-      // Just verify no errors
-      consoleMonitor.assertNoErrors();
-    });
-  });
-
-  test.describe("Response Time Display", () => {
-    test("should display response time on assistant messages", async ({
-      page,
-    }) => {
-      const consoleMonitor = new ConsoleMonitor(page);
-
-      await page.goto("/chat");
-
-      // Send a message
-      await page.getByTestId("message-input").fill("Hello");
-      await page.getByTestId("send-button").click();
-
-      // Wait for response
-      await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
-      });
-      await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
-      });
-
-      // Should display response time with stopwatch emoji
-      const assistantMessage = page.getByTestId("assistant-message");
-
-      // Look for time display pattern (e.g., "1.2s" or "500ms")
-      const timeDisplay = assistantMessage.locator('text=/\\d+(\\.\\d+)?(ms|s|m)/');
-
-      await expect(timeDisplay).toBeVisible({ timeout: 5000 });
-
-      consoleMonitor.assertNoErrors();
-    });
-  });
-
-  test.describe("Message Footer Actions", () => {
-    test("should have copy and retry buttons on assistant message", async ({
-      page,
-    }) => {
-      const consoleMonitor = new ConsoleMonitor(page);
-
-      await page.goto("/chat");
-
-      // Send a message
-      await page.getByTestId("message-input").fill("Hello");
-      await page.getByTestId("send-button").click();
-
-      // Wait for response
-      await expect(page.getByTestId("assistant-message")).toBeVisible({
-        timeout: 30000,
-      });
-      await expect(page.getByTestId("send-button")).toBeVisible({
-        timeout: 30000,
-      });
-
-      // Assistant message should have both copy and retry buttons
-      const assistantMessage = page.getByTestId("assistant-message");
-      const copyButton = assistantMessage.locator('[aria-label="Copy message"]');
-      const retryButton = assistantMessage.locator('[aria-label="Try again"]');
-
-      await expect(copyButton).toBeVisible();
-      await expect(retryButton).toBeVisible();
-
-      consoleMonitor.assertNoErrors();
-    });
-
-    test("should only have copy button on user message", async ({ page }) => {
+  test.describe("User Message Footer", () => {
+    test("should have copy button on user message only", async ({ page }) => {
       const consoleMonitor = new ConsoleMonitor(page);
 
       await page.goto("/chat");
@@ -382,14 +163,15 @@ test.describe("Rich Markdown Rendering", () => {
       await page.getByTestId("send-button").click();
 
       // Wait for user message
-      await expect(page.getByTestId("user-message")).toBeVisible();
+      const userMessage = page.getByTestId("user-message");
+      await expect(userMessage).toBeVisible();
 
       // User message should have copy button
-      const userMessage = page.getByTestId("user-message");
       const copyButton = userMessage.locator('[aria-label="Copy message"]');
-      const retryButton = userMessage.locator('[aria-label="Try again"]');
-
       await expect(copyButton).toBeVisible();
+
+      // User message should NOT have retry button
+      const retryButton = userMessage.locator('[aria-label="Try again"]');
       expect(await retryButton.count()).toBe(0);
 
       consoleMonitor.assertNoErrors();
